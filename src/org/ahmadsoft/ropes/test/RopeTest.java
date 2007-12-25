@@ -22,19 +22,39 @@
  */
 package org.ahmadsoft.ropes.test;
 
-import java.util.Formatter;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Iterator;
-import java.util.Locale;
+import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.ahmadsoft.ropes.Rope;
 import org.ahmadsoft.ropes.impl.ConcatenationRope;
-import org.ahmadsoft.ropes.impl.FlatRope;
+import org.ahmadsoft.ropes.impl.FlatCharSequenceRope;
+import org.ahmadsoft.ropes.impl.ReverseRope;
 import org.ahmadsoft.ropes.impl.SubstringRope;
 
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+
 public class RopeTest extends TestCase {
+	
+	public void testTemp() {
+		// insert temporary code here.
+	}
+	
+	public void testMatches() {
+		Rope x1 = new FlatCharSequenceRope("0123456789");
+		Rope x2 = new ConcatenationRope(x1, x1);
+
+		assertTrue(x2.matches("0.*9"));
+		assertTrue(x2.matches(Pattern.compile("0.*9")));
+
+		assertTrue(x2.matches("0.*90.*9"));
+		assertTrue(x2.matches(Pattern.compile("0.*90.*9")));
+	}
 	
 	public void testConcatenationFlatFlat() {
 		Rope r1 = Rope.BUILDER.build("alpha");
@@ -48,9 +68,9 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testIterator() {
-		Rope x1 = new FlatRope("0123456789");
-		Rope x2 = new FlatRope("0123456789");
-		Rope x3 = new FlatRope("0123456789");
+		Rope x1 = new FlatCharSequenceRope("0123456789");
+		Rope x2 = new FlatCharSequenceRope("0123456789");
+		Rope x3 = new FlatCharSequenceRope("0123456789");
 		ConcatenationRope c1 = new ConcatenationRope(x1, x2);
 		ConcatenationRope c2 = new ConcatenationRope(c1, x3);
 		
@@ -60,6 +80,76 @@ public class RopeTest extends TestCase {
 			i.next();
 		}
 		assertTrue(!i.hasNext());
+		
+		FlatCharSequenceRope z1 = new FlatCharSequenceRope("0123456789");
+		Rope z2 = new SubstringRope(z1, 2, 0);
+		Rope z3 = new SubstringRope(z1, 2, 2);
+		Rope z4 = new ConcatenationRope(z3, new SubstringRope(z1, 6, 2)); // 2367
+		
+		i = z2.iterator();
+		assertTrue(!i.hasNext());
+		i = z3.iterator();
+		assertTrue(i.hasNext());
+		assertEquals((char) '2',(char) i.next());
+		assertTrue(i.hasNext());
+		assertEquals((char) '3', (char) i.next());
+		assertTrue(!i.hasNext());
+		for (int j=0; j<=z3.length(); ++j) {
+			try {
+				z3.iterator(j);
+			} catch (Exception e) {
+				fail(j + " " + e.toString());
+			}
+		}
+		assertTrue(4 == z4.length());
+		for (int j=0; j<=z4.length(); ++j) {
+			try {
+				z4.iterator(j);
+			} catch (Exception e) {
+				fail(j + " " + e.toString());
+			}
+		}
+		i=z4.iterator(4);
+		assertTrue(!i.hasNext());
+		i=z4.iterator(2);
+		assertTrue(i.hasNext());
+		assertEquals((char) '6',(char) i.next());
+		assertTrue(i.hasNext());
+		assertEquals((char) '7',(char) i.next());
+		assertTrue(!i.hasNext());
+		
+		
+	}
+	
+	public void testReverse() {
+		Rope x1 = new FlatCharSequenceRope("012345");
+		Rope x2 = new FlatCharSequenceRope("67");
+		Rope x3 = new ConcatenationRope(x1, x2);
+		System.out.println(x1.reverse());
+		assertEquals("543210", x1.reverse().toString());
+		assertEquals("76543210", x3.reverse().toString());
+		assertEquals(x3.reverse(), x3.reverse().reverse().reverse());
+		assertEquals("654321", x3.reverse().subSequence(1, 7).toString());
+	}
+	
+
+	public void testTrim() {
+		Rope x1 = new FlatCharSequenceRope("\u0012  012345");
+		Rope x2 = new FlatCharSequenceRope("\u0002 67	       \u0007");
+		Rope x3 = new ConcatenationRope(x1, x2);
+
+		assertEquals("012345", x1.ltrim().toString());
+		assertEquals("67	       \u0007", x2.ltrim().toString());
+		assertEquals("012345\u0002 67	       \u0007", x3.ltrim().toString());
+
+		assertEquals("\u0012  012345", x1.rtrim().toString());
+		assertEquals("\u0002 67", x2.rtrim().toString());
+		assertEquals("\u0012  012345\u0002 67", x3.rtrim().toString());
+		assertEquals("012345\u0002 67", x3.rtrim().reverse().rtrim().reverse().toString());
+
+		assertEquals(x3.ltrim().rtrim(), x3.rtrim().ltrim());
+		assertEquals(x3.ltrim().rtrim(), x3.ltrim().reverse().ltrim().reverse());
+		assertEquals(x3.ltrim().rtrim(), x3.trim());
 	}
 
 	public void testCreation() {
@@ -94,8 +184,8 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testHashCode2() {
-		Rope r1 = new FlatRope(new StringBuffer("The quick brown fox."));
-		Rope r2 = new ConcatenationRope(new FlatRope(""), new FlatRope("The quick brown fox."));
+		Rope r1 = new FlatCharSequenceRope(new StringBuffer("The quick brown fox."));
+		Rope r2 = new ConcatenationRope(new FlatCharSequenceRope(""), new FlatCharSequenceRope("The quick brown fox."));
 
 		assertTrue(r1.equals(r2));
 		assertTrue(r1.equals(r2));
@@ -114,6 +204,26 @@ public class RopeTest extends TestCase {
 		assertEquals(0, r.indexOf('a'));
 		assertEquals(1, r.indexOf('b'));
 		assertEquals(5, r.indexOf('f'));
+		
+
+		assertEquals(1, r.indexOf('b', 0));
+		assertEquals(0, r.indexOf('a', 0));
+		assertEquals(-1, r.indexOf('z', 0));
+		assertEquals(-1, r.indexOf('b',2));
+		assertEquals(5, r.indexOf('f',5));
+		
+		assertEquals(2, r.indexOf("cd", 1));
+		
+		r = Rope.BUILDER.build("The quick brown fox jumped over the jumpy brown dog.");
+		assertEquals(0, r.indexOf("The"));
+		assertEquals(10, r.indexOf("brown"));
+		assertEquals(10, r.indexOf("brown", 10));
+		assertEquals(42, r.indexOf("brown",11));
+		assertEquals(-1, r.indexOf("brown",43));
+		assertEquals(-1, r.indexOf("hhe"));
+		
+		r = Rope.BUILDER.build("zbbzzz");
+		assertEquals(-1, r.indexOf("ab",1));
 	}
 
 	public void testInsert() {
@@ -154,7 +264,140 @@ public class RopeTest extends TestCase {
 		assertTrue(phrase.equals(r1.toString()));
 		assertTrue(phrase.subSequence(7, 27).equals(r1.subSequence(7, 27).toString()));
 	}
+	
+	public void testReverseIterator() {
+		FlatCharSequenceRope r1 = new FlatCharSequenceRope("01234");
+		ReverseRope r2 = new ReverseRope(r1);
+		SubstringRope r3 = new SubstringRope(r1, 0, 3);
+		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//0123443210012
+		
+		Iterator<Character> x = r1.reverseIterator();
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '3',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r1.reverseIterator(4);
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r2.reverseIterator();
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '3',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r2.reverseIterator(4);
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r3.reverseIterator();
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
 
+		x = r3.reverseIterator(1);
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r4.reverseIterator(); //0123443210012
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '3',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '3',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r4.reverseIterator(7);
+		assertEquals((char) '4',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '4',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '3',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '2',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '1',(char)  x.next());
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r4.reverseIterator(12);
+		assertTrue(x.hasNext());
+		assertEquals((char) '0',(char)  x.next());
+		assertFalse(x.hasNext());
+		
+		x = r4.reverseIterator(13);
+		assertFalse(x.hasNext());
+		
+	}
+
+	public void testSerialize() {
+		FlatCharSequenceRope r1 = new FlatCharSequenceRope("01234");
+		ReverseRope r2 = new ReverseRope(r1);
+		SubstringRope r3 = new SubstringRope(r1, 0, 1);
+		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//01234432100
+		
+		ByteOutputStream out = new ByteOutputStream();
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(out);
+			oos.writeObject(r4);
+			oos.close();
+			ByteArrayInputStream in = new ByteArrayInputStream(out.getBytes());
+			ObjectInputStream ois = new ObjectInputStream(in);
+			Rope r = (Rope) ois.readObject();
+			assertTrue(r instanceof FlatCharSequenceRope);
+		} catch (Exception e) {
+			fail(e.toString());
+		}
+		
+		
+	}
+	
 	public void testAppend() {
 		Rope r = Rope.BUILDER.build("");
 		r=r.append('a');
@@ -166,7 +409,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testCharAt() {
-		FlatRope r1 = new FlatRope("0123456789");
+		FlatCharSequenceRope r1 = new FlatCharSequenceRope("0123456789");
 		SubstringRope r2 = new SubstringRope(r1,0,1);
 		SubstringRope r3 = new SubstringRope(r1,9,1);
 		ConcatenationRope r4 = new ConcatenationRope(r1, r3);
@@ -181,12 +424,12 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testRegexp() {
-		ConcatenationRope r = new ConcatenationRope(new FlatRope("012345"), new FlatRope("6789"));
-		CharSequence c = r.getRegexpCharSeq(r);
+		ConcatenationRope r = new ConcatenationRope(new FlatCharSequenceRope("012345"), new FlatCharSequenceRope("6789"));
+		CharSequence c = r.getForSequentialAccess();
 		for (int j=0; j<10; ++j) {
 			assertEquals(r.charAt(j), c.charAt(j));
 		}
-		c = r.getRegexpCharSeq(r);
+		c = r.getForSequentialAccess();
 		
 		int[] indices={1,2,1,3,5,0,6,7,8,1,7,7,7};
 		for (int i: indices) {

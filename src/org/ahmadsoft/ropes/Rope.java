@@ -1,28 +1,29 @@
 /*
  *  Rope.java
- *  Copyright (C) 2007 Amin Ahmad. 
- *  
+ *  Copyright (C) 2007 Amin Ahmad.
+ *
  *  This file is part of Java Ropes.
- *  
+ *
  *  Java Ropes is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Java Ropes is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Java Ropes.  If not, see <http://www.gnu.org/licenses/>.
- *  	
- *  Amin Ahmad can be contacted at amin.ahmad@gmail.com or on the web at 
+ *
+ *  Amin Ahmad can be contacted at amin.ahmad@gmail.com or on the web at
  *  www.ahmadsoft.org.
  */
 package org.ahmadsoft.ropes;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -31,13 +32,13 @@ import java.util.regex.Pattern;
 
 /**
  * <p>
- * A rope represents character strings. Ropes are immutable which 
+ * A rope represents character strings. Ropes are immutable which
  * means that once they are created, they cannot be changed. This
  * makes them suitable for sharing in multi-threaded environments.
  * </p><p>
  * Rope operations, unlike string operations, scale well to very
  * long character strings. Most mutation operations run in O(log n)
- * time or better. However, random-access character retrieval is 
+ * time or better. However, random-access character retrieval is
  * generally slower than for a String. By traversing consecutive
  * characters with an iterator instead, performance improves to
  * O(1).
@@ -53,19 +54,14 @@ import java.util.regex.Pattern;
  * on a rope always returns a modified copy; the original rope is
  * left untouched. However, care must be taken to build ropes from
  * immutable <code>CharSequences</code> such as <code>Strings</code>,
- * or else from mutable <code>CharSequences</code> that your program 
- * <emph>guarantees will not change</emph>. Failure to do so will result in 
+ * or else from mutable <code>CharSequences</code> that your program
+ * <emph>guarantees will not change</emph>. Failure to do so will result in
  * logic errors.
- * <h4>Serialization</h4>
- * Clients should manually serialize ropes as strings. Since Java's 
- * serialization mechanism does not allow delegation of object creation
- * to a factory, it is impossible to code an efficient serialization
- * routine within the Rope class. 
- * 
+ *
  * @author Amin Ahmad
  */
-public interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence> {
-	
+public interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>, Serializable {
+
 	/**
 	 * A factory used for constructing ropes.
 	 */
@@ -116,7 +112,7 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	/**
 	 * Returns the index within this rope of the first occurrence of the
 	 * specified character. If a character with value <code>ch</code> occurs
-	 * in the character sequence represented by this <code>String</code>
+	 * in the character sequence represented by this <code>Rope</code>
 	 * object, then the index of the first such occurrence is returned --
 	 * that is, the smallest value k such that:
 	 * <p>
@@ -130,6 +126,54 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * does not occur.
 	 */
 	int indexOf(char ch);
+
+	/**
+	 * Returns the index within this rope of the first occurrence of the
+	 * specified character, beginning at the specified index. If a character
+	 * with value <code>ch</code> occurs in the character sequence
+	 * represented by this <code>Rope</code> object, then the index of the
+	 * first such occurrence is returned&#8212;that is, the smallest value k
+	 * such that:
+	 * <p>
+	 * <code>this.charAt(k) == ch</code>
+	 * <p>
+	 * is <code>true</code>. If no such character occurs in this string, then
+	 * <code>-1</code> is returned.
+	 * @param ch a character.
+	 * @param fromIndex the index to start searching from.
+	 * @return the index of the first occurrence of the character in the character
+	 * sequence represented by this object, or -1 if the character does not occur.
+	 */
+	int indexOf(char ch, int fromIndex);
+
+	/**
+	 * Returns the index within this rope of the first occurrence of the
+	 * specified string. The value returned is the smallest <i>k</i> such
+	 * that:
+	 * <pre>
+	 *     this.startsWith(str, k)
+	 * </pre>
+	 * If no such <i>k</i> exists, then -1 is returned.
+	 * @param sequence the string to find.
+	 * @return the index of the first occurrence of the specified string, or
+	 * -1 if the specified string does not occur.
+	 */
+	int indexOf(CharSequence sequence);
+
+	/**
+	 * Returns the index within this rope of the first occurrence of the
+	 * specified string, beginning at the specified index. The value returned
+	 * is the smallest <i>k</i> such that:
+	 * <pre>
+	 *     k >= fromIndex && this.startsWith(str, k)
+	 * </pre>
+	 * If no such <i>k</i> exists, then -1 is returned.
+	 * @param sequence the string to find.
+	 * @param fromIndex the index to start searching from.
+	 * @return the index of the first occurrence of the specified string, or
+	 * -1 if the specified string does not occur.
+	 */
+	int indexOf(CharSequence sequence, int fromIndex);
 
 	/**
      * Creates a new rope by inserting the specified <code>CharSequence</code>
@@ -148,40 +192,22 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      */
     Rope insert(int dstOffset, CharSequence s);
 
-    /**
+	/**
      * Returns an iterator positioned to start at the specified index.
      * @param start the start position.
      * @return an iterator positioned to start at the specified index.
      */
     Iterator<Character> iterator(int start);
-    
-    /**
-     * Rebalances the current rope, returning the rebalanced rope. In general,
-     * rope rebalancing is handled automatically, but this method is provided
-     * to give users more control.
-     * 
-     * @return a rebalanced rope.
-     */
-    public Rope rebalance();
-    
-    /**
-     * Write this rope.
-     * @param out
-     */
-    public void write(Writer out) throws IOException;
-    
-    /**
-     * Write this rope.
-     * @param out
-     */
-    public void write(Writer out, int offset, int length) throws IOException;
 
+	/**
+	 * Trims all whitespace as well as characters less than 0x20 from
+	 * the beginning of this string.
+	 * @return a rope with all leading whitespace trimmed.
+	 */
+	Rope ltrim();
 
-    @Override
-	Rope subSequence(int start, int end);
-    
-    /**
-     * Creates a matcher that will match this rope against the 
+	/**
+     * Creates a matcher that will match this rope against the
      * specified pattern. This method produces a higher performance
      * matcher than:
      * <pre>
@@ -192,4 +218,91 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      * @return a matcher.
      */
     Matcher matcher(Pattern pattern);
+
+    /**
+     * Returns <code>true</code> if this rope matches the specified
+     * <code>Pattern</code>, or <code>false</code> otherwise.
+     * @see java.util.regex.Pattern
+     * @param regex the specified regular expression.
+     * @return <code>true</code> if this rope matches the specified
+     * <code>Pattern</code>, or <code>false</code> otherwise.
+     */
+    public boolean matches(Pattern regex);
+
+    /**
+     * Returns <code>true</code> if this rope matches the specified
+     * regular expression, or <code>false</code> otherwise.
+     * @see java.util.regex.Pattern
+     * @param regex the specified regular expression.
+     * @return <code>true</code> if this rope matches the specified
+     * regular expression, or <code>false</code> otherwise.
+     */
+    public boolean matches(String regex);
+
+
+    /**
+     * Rebalances the current rope, returning the rebalanced rope. In general,
+     * rope rebalancing is handled automatically, but this method is provided
+     * to give users more control.
+     *
+     * @return a rebalanced rope.
+     */
+    public Rope rebalance();
+
+    /**
+     * Reverses this rope.
+     * @return a reversed copy of this rope.
+     */
+    public Rope reverse();
+
+    /**
+     * Returns a reverse iterator positioned to start at the end of this
+     * rope. A reverse iterator moves backwards instead of forwards through
+     * a rope.
+     * @return A reverse iterator positioned at the end of this rope.
+     * @see Rope#reverseIterator(int)
+     */
+    Iterator<Character> reverseIterator();
+
+    /**
+     * Returns a reverse iterator positioned to start at the specified index.
+     * A reverse iterator moves backwards instead of forwards through a rope.
+     * @param start the start position.
+     * @return a reverse iterator positioned to start at the specified index from
+     * the end of the rope. For example, a value of 1 indicates the iterator 
+     * should start 1 character before the end of the rope.
+     * @see Rope#reverseIterator()
+     */
+    Iterator<Character> reverseIterator(int start);
+
+    /**
+	 * Trims all whitespace as well as characters less than <code>0x20</code> from
+	 * the end of this string.
+	 * @return a rope with all trailing whitespace trimmed.
+	 */
+	Rope rtrim();
+
+    @Override
+	Rope subSequence(int start, int end);
+
+    /**
+	 * Trims all whitespace as well as characters less than <code>0x20</code> from
+	 * the beginnning and end of this string.
+	 * @return a rope with all leading and trailing whitespace trimmed.
+	 */
+	Rope trim();
+
+    /**
+     * Write this rope to a <code>Writer</code>.
+     * @param out the writer object.
+     */
+    public void write(Writer out) throws IOException;
+
+    /**
+     * Write a range of this rope to a <code>Writer</code>.
+     * @param out the writer object.
+     * @param offset the range offset.
+     * @param length the range length.
+     */
+    public void write(Writer out, int offset, int length) throws IOException;
 }

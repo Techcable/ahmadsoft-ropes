@@ -1,5 +1,5 @@
 /*
- *  SubstringRope.java
+ *  FlatCharSequenceRope.java
  *  Copyright (C) 2007 Amin Ahmad.
  *
  *  This file is part of Java Ropes.
@@ -25,51 +25,35 @@ package org.ahmadsoft.ropes.impl;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.Rope;
 
 /**
- * Represents a lazily-evaluated substring of another rope. For performance
- * reasons, the target rope must be a <code>FlatRope</code>.
- * @author aahmad
+ * A rope constructed from an underlying character sequence.
+ * @author Amin Ahmad
  */
-public class SubstringRope extends AbstractRope {
+public final class FlatCharSequenceRope extends AbstractRope implements FlatRope {
 
-	private final FlatRope rope;
-	private final int offset;
-	private final int length;
-	private final byte depth;
+	private final CharSequence sequence;
 
-	public SubstringRope(final FlatRope rope, final int offset, final int length) {
-		if (length < 0 || offset < 0 || offset + length > rope.length())
-			throw new IndexOutOfBoundsException("Invalid substring offset (" + offset + ") and length (" + length + ") for underlying rope with length " + rope.length());
-
-		this.rope = rope;
-		this.offset = offset;
-		this.length = length;
-		this.depth = (byte) (RopeUtilities.INSTANCE.depth(rope) + 1);
+	/**
+	 * Constructs a new rope from an underlying character sequence.
+	 * @param sequence
+	 */
+	public FlatCharSequenceRope(final CharSequence sequence) {
+		this.sequence = sequence;
 	}
 
 	@Override
 	public char charAt(final int index) {
-		return this.rope.charAt(this.offset + index);
+		return this.sequence.charAt(index);
 	}
 
 	@Override
 	public byte depth() {
-		return this.depth;
-	}
-
-	int getOffset() {
-		return this.offset;
-	}
-
-	/**
-	 * Returns the rope underlying this one.
-	 * @return the rope underlying this one.
-	 */
-	public Rope getRope() {
-		return this.rope;
+		return 0;
 	}
 
 	@Override
@@ -77,32 +61,33 @@ public class SubstringRope extends AbstractRope {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
 		return new Iterator<Character>() {
-
-			final Iterator<Character> u = SubstringRope.this.getRope().iterator(SubstringRope.this.getOffset() + start);
-			int position = start;
-
+			int current = start;
 			@Override
 			public boolean hasNext() {
-				return this.position < SubstringRope.this.length();
+				return this.current < FlatCharSequenceRope.this.length();
 			}
 
 			@Override
 			public Character next() {
-				++this.position;
-				return this.u.next();
+				return FlatCharSequenceRope.this.sequence.charAt(this.current++);
 			}
 
 			@Override
 			public void remove() {
-				this.u.remove();
+				throw new UnsupportedOperationException("Rope iterator is read-only.");
 			}
-
 		};
 	}
 
 	@Override
 	public int length() {
-		return this.length;
+		return this.sequence.length();
+	}
+
+	@Override
+	public Matcher matcher(final Pattern pattern) {
+		// optimized to return a matcher directly on the underlying sequence.
+		return pattern.matcher(this.sequence);
 	}
 
 	@Override
@@ -115,23 +100,20 @@ public class SubstringRope extends AbstractRope {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
 		return new Iterator<Character>() {
-			final Iterator<Character> u = SubstringRope.this.getRope().reverseIterator(SubstringRope.this.getRope().length() - SubstringRope.this.getOffset() - SubstringRope.this.length() + start);
-			int position = SubstringRope.this.length() - start;
-
+			int current = FlatCharSequenceRope.this.length() - start;
 			@Override
 			public boolean hasNext() {
-				return this.position > 0;
+				return this.current > 0;
 			}
 
 			@Override
 			public Character next() {
-				--this.position;
-				return this.u.next();
+				return FlatCharSequenceRope.this.sequence.charAt(--this.current);
 			}
 
 			@Override
 			public void remove() {
-				this.u.remove();
+				throw new UnsupportedOperationException("Rope iterator is read-only.");
 			}
 		};
 	}
@@ -140,21 +122,37 @@ public class SubstringRope extends AbstractRope {
 	public Rope subSequence(final int start, final int end) {
 		if (start == 0 && end == this.length())
 			return this;
-		return new SubstringRope(this.rope, this.offset + start, end-start);
+		if (end - start < 8 || this.sequence instanceof String /* special optimization for String */) {
+			return new FlatCharSequenceRope(this.sequence.subSequence(start, end));
+		} else {
+			return new SubstringRope(this, start, end-start);
+		}
 	}
 
 	@Override
 	public String toString() {
-		return this.rope.toString(this.offset, this.length);
+		return this.sequence.toString();
+	}
+
+	public String toString(final int offset, final int length) {
+		return this.sequence.subSequence(offset, offset + length).toString();
 	}
 
 	@Override
 	public void write(final Writer out) throws IOException {
-		this.rope.write(out, this.offset, this.length);
+		this.write(out, 0, this.length());
 	}
 
 	@Override
 	public void write(final Writer out, final int offset, final int length) throws IOException {
-		this.rope.write(out, this.offset + offset, this.length + length);
+		if (offset < 0 || offset + length > this.length())
+			throw new IndexOutOfBoundsException("Rope index out of bounds:" + (offset < 0 ? offset: offset + length));
+
+		if (this.sequence instanceof String) {	// optimization for String
+			out.write(((String) this.sequence).substring(offset, offset+length));
+			return;
+		}
+		for (int j=offset; j<offset + length; ++j)
+			out.write(this.sequence.charAt(j));
 	}
 }

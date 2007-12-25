@@ -1,23 +1,23 @@
 /*
- *  AbstractRope.java
- *  Copyright (C) 2007 Amin Ahmad. 
- *  
+ *  ConcatenationRope.java
+ *  Copyright (C) 2007 Amin Ahmad.
+ *
  *  This file is part of Java Ropes.
- *  
+ *
  *  Java Ropes is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Java Ropes is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Java Ropes.  If not, see <http://www.gnu.org/licenses/>.
- *  	
- *  Amin Ahmad can be contacted at amin.ahmad@gmail.com or on the web at 
+ *
+ *  Amin Ahmad can be contacted at amin.ahmad@gmail.com or on the web at
  *  www.ahmadsoft.org.
  */
 package org.ahmadsoft.ropes.impl;
@@ -25,8 +25,6 @@ package org.ahmadsoft.ropes.impl;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.Rope;
 
@@ -52,12 +50,12 @@ public class ConcatenationRope extends AbstractRope {
 		this.depth  = (byte) (Math.max(RopeUtilities.INSTANCE.depth(left), RopeUtilities.INSTANCE.depth(right)) + 1);
 		this.length = left.length() + right.length();
 	}
-	
+
 	@Override
 	public char charAt(final int index) {
 		if (index < 0 || index >= this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + index);
-		
+
 		if (index < this.left.length())
 			return this.left.charAt(index);
 		else
@@ -69,8 +67,60 @@ public class ConcatenationRope extends AbstractRope {
 		return this.depth;
 	}
 
+	@Override
+	public CharSequence getForSequentialAccess() {
+		return this.getForSequentialAccess(this);
+	}
+
+	/*
+	 * Returns this object as a char sequence optimized for
+	 * regular expression searches.
+	 * <p>
+	 * <emph>This method is public only to facilitate unit
+	 * testing.</emph>
+	 */
+	private CharSequence getForSequentialAccess(final Rope rope) {
+		return new CharSequence() {
+
+			private final ConcatenationRopeIteratorImpl iterator = (ConcatenationRopeIteratorImpl) rope.iterator(0);
+
+			@Override
+			public char charAt(final int index) {
+				if (index > this.iterator.getPos()) {
+					this.iterator.skip(index-this.iterator.getPos()-1);
+					try {
+						final char c = this.iterator.next();
+						return c;
+					} catch (final IllegalArgumentException e) {
+						System.out.println("Rope length is: " + rope.length() + " charAt is " + index);
+						throw e;
+					}
+				} else { /* if (index <= lastIndex) */
+					final int toMoveBack = this.iterator.getPos() - index + 1;
+					if (this.iterator.canMoveBackwards(toMoveBack)) {
+						this.iterator.moveBackwards(toMoveBack);
+						return this.iterator.next();
+					} else {
+						return rope.charAt(index);
+					}
+				}
+			}
+
+			@Override
+			public int length() {
+				return rope.length();
+			}
+
+			@Override
+			public CharSequence subSequence(final int start, final int end) {
+				return rope.subSequence(start, end);
+			}
+
+		};
+	}
+
 	/**
-	 * Return the left-hand rope. 
+	 * Return the left-hand rope.
 	 * @return the left-hand rope.
 	 */
 	public Rope getLeft() {
@@ -87,7 +137,7 @@ public class ConcatenationRope extends AbstractRope {
 
 	@Override
 	public Iterator<Character> iterator(final int start) {
-		if (start < 0 || start >= length())
+		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
 		if (start >= this.left.length()) {
 			return this.right.iterator(start - this.left.length());
@@ -102,9 +152,32 @@ public class ConcatenationRope extends AbstractRope {
 	}
 
 	@Override
+	public Rope rebalance() {
+		return RopeUtilities.INSTANCE.rebalance(this);
+	}
+
+	@Override
+	public Rope reverse() {
+		return new ConcatenationRope(this.getRight().reverse(), this.getLeft().reverse());
+	}
+
+	@Override
+	public Iterator<Character> reverseIterator(final int start) {
+		if (start < 0 || start > this.length())
+			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
+		if (start >= this.right.length()) {
+			return this.left.reverseIterator(start - this.right.length());
+		} else {
+			return new ConcatenationRopeReverseIteratorImpl(this, start);
+		}
+	}
+
+	@Override
 	public Rope subSequence(final int start, final int end) {
 		if (start < 0 || end > this.length())
 			throw new IllegalArgumentException("Illegal subsequence (" + start + "," + end + ")");
+		if (start == 0 && end == this.length())
+			return this;
 		final int l = this.left.length();
 		if (end <= l)
 			return this.left.subSequence(start, end);
@@ -116,78 +189,21 @@ public class ConcatenationRope extends AbstractRope {
 	}
 
 	@Override
-	public Rope rebalance() {
-		return RopeUtilities.INSTANCE.rebalance(this);
+	public void write(final Writer out) throws IOException {
+		this.left.write(out);
+		this.right.write(out);
 	}
 
 	@Override
-	public void write(Writer out) throws IOException {
-		left.write(out);
-		right.write(out);
-	}
-
-	@Override
-	public void write(Writer out, int offset, int length) throws IOException {
-		if (offset + length < left.length()) {
-			left.write(out, offset, length);
-		} else if (offset >= left.length()) {
-			right.write(out, offset - left.length(), length);
+	public void write(final Writer out, final int offset, final int length) throws IOException {
+		if (offset + length < this.left.length()) {
+			this.left.write(out, offset, length);
+		} else if (offset >= this.left.length()) {
+			this.right.write(out, offset - this.left.length(), length);
 		} else {
-			int writeLeft = left.length() - offset;
-			left.write(out, offset, writeLeft);
-			right.write(out, 0, right.length() - writeLeft);
+			final int writeLeft = this.left.length() - offset;
+			this.left.write(out, offset, writeLeft);
+			this.right.write(out, 0, this.right.length() - writeLeft);
 		}
-	}
-
-	@Override
-	public Matcher matcher(Pattern pattern) {
-		return pattern.matcher(getRegexpCharSeq(this));
-	}
-	
-	/*
-	 * Returns this object as a char sequence optimized for 
-	 * regular expression searches.
-	 * <p>
-	 * <emph>This method is public only to facilitate unit
-	 * testing.</emph>
-	 */
-	public CharSequence getRegexpCharSeq(final Rope rope) {
-		return new CharSequence() {
-
-			private ConcatenationRopeIteratorImpl iterator = (ConcatenationRopeIteratorImpl) rope.iterator(0);
-		
-			@Override
-			public char charAt(int index) {
-				if (index > iterator.getPos()) {
-					iterator.skip(index-iterator.getPos()-1);
-					try {
-						char c = iterator.next();
-						return c;
-					} catch (IllegalArgumentException e) {
-						System.out.println("Rope length is: " + rope.length() + " charAt is " + index);
-						throw e;
-					}
-				} else { /* if (index <= lastIndex) */
-					int toMoveBack = iterator.getPos() - index + 1;
-					if (iterator.canMoveBackwards(toMoveBack)) {
-						iterator.moveBackwards(toMoveBack);
-						return iterator.next();
-					} else {
-						return rope.charAt(index);
-					}
-				}
-			}
-
-			@Override
-			public int length() {
-				return rope.length();
-			}
-
-			@Override
-			public CharSequence subSequence(int start, int end) {
-				return rope.subSequence(start, end);
-			}
-			
-		};
 	}
 }

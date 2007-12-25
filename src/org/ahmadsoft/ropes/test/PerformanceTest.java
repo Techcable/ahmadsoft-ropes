@@ -23,6 +23,7 @@
 package org.ahmadsoft.ropes.test;
 
 import java.io.BufferedReader;
+import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -49,6 +50,7 @@ public class PerformanceTest {
 	private static int lenBF = 467196;
 	
 	private static final int ITERATION_COUNT = 7;
+	private static final int PLAN_LENGTH = 500;
 	
 
 	private static String complexString=null; 
@@ -67,92 +69,97 @@ public class PerformanceTest {
 		long x,y;
 
 		x=System.nanoTime();
-		final String aChristmasCarol = PerformanceTest.readCC();
-		final String bensAuto        = PerformanceTest.readBF();
+		final char[] aChristmasCarol_RAW = PerformanceTest.readCC();
+		final char[] bensAuto_RAW        = PerformanceTest.readBF();
+		final String aChristmasCarol = new String(aChristmasCarol_RAW);
+		final String bensAuto        = new String(bensAuto_RAW);
 		y=System.nanoTime();
 		System.out.println("Read " + aChristmasCarol.length() + " bytes in " + PerformanceTest.time(x,y));
 
-//		System.out.println();
-//		System.out.println("**** DELETE PLAN TEST ****");
-//		System.out.println();
-//
-//		int newSize = PerformanceTest.lenCC;
-//		final int[][] deletePlan=new int[230][2];
-//		for (int j=0;j<deletePlan.length;++j) {
-//			deletePlan[j][0] = PerformanceTest.random.nextInt(newSize);
-//			deletePlan[j][1] = PerformanceTest.random.nextInt(Math.min(100, newSize - deletePlan[j][0]));
-//			newSize -= deletePlan[j][1];
-//		}
-//
-//		{
-//		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
-//		for (int j=0;j<ITERATION_COUNT;++j){
-//		stats0[j] = PerformanceTest.stringDeleteTest(aChristmasCarol, deletePlan);
-//		stats1[j] = PerformanceTest.stringBufferDeleteTest(aChristmasCarol, deletePlan);
-//		stats2[j] = PerformanceTest.ropeDeleteTest(aChristmasCarol, deletePlan);
-//		}
-//		stat(System.out, stats0, "ns", "[String]");
-//		stat(System.out, stats1, "ns", "[StringBuffer]");
-//		stat(System.out, stats2, "ns", "[Rope]");
-//		}
-//
-//		System.out.println();
-//		System.out.println("**** PREPEND PLAN TEST ****");
-//		System.out.println();
-//
-//		final int[][] prependPlan=new int[500][2];
-//		for (int j=0;j<prependPlan.length;++j) {
-//			prependPlan[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);
-//			prependPlan[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenCC - prependPlan[j][0]);
-//		}
-//
-//		for (int k=20; k<prependPlan.length; k+=20) {
-//		System.out.println("Prepend plan length: " + k);
-//		{
-//		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
-//		for (int j=0;j<ITERATION_COUNT;++j){
-//		stats0[j] = PerformanceTest.stringPrependTest(aChristmasCarol, prependPlan, k);
-//		stats1[j] = PerformanceTest.stringBufferPrependTest(aChristmasCarol, prependPlan, k);
-//		stats2[j] = PerformanceTest.ropePrependTest(aChristmasCarol, prependPlan, k);
-//		}
-//		stat(System.out, stats0, "ns", "[String]");
-//		stat(System.out, stats1, "ns", "[StringBuffer]");
-//		stat(System.out, stats2, "ns", "[Rope]");
-//		}
-//		}
-//
-//		System.out.println();
-//		System.out.println("**** APPEND PLAN TEST ****");
-//		System.out.println();
-//
-//		final int[][] appendPlan=new int[500][2];
-//		for (int j=0;j<appendPlan.length;++j) {
-//			appendPlan[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);
-//			appendPlan[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenCC - appendPlan[j][0]);
-//		}
-//
-//
-//		for (int k=20; k<appendPlan.length; k+=20) {
-//		System.out.println("Append plan length: " + k);
-//		{
-//		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
-//		for (int j=0;j<ITERATION_COUNT;++j){
-//		stats0[j] = PerformanceTest.stringAppendTest(aChristmasCarol, appendPlan, k);
-//		stats1[j] = PerformanceTest.stringBufferAppendTest(aChristmasCarol, appendPlan, k);
-//		stats2[j] = PerformanceTest.ropeAppendTest(aChristmasCarol, appendPlan, k);
-//		}
-//		stat(System.out, stats0, "ns", "[String]");
-//		stat(System.out, stats1, "ns", "[StringBuffer]");
-//		stat(System.out, stats2, "ns", "[Rope]");
-//		}
-//		}
+		System.out.println();
+		System.out.println("**** DELETE PLAN TEST ****");
+		System.out.println();
+
+		int newSize = PerformanceTest.lenCC;
+		final int[][] deletePlan=new int[PLAN_LENGTH][2];
+		for (int j=0;j<deletePlan.length;++j) {
+			deletePlan[j][0] = PerformanceTest.random.nextInt(newSize);
+			deletePlan[j][1] = PerformanceTest.random.nextInt(Math.min(100, newSize - deletePlan[j][0]));
+			newSize -= deletePlan[j][1];
+		}
+
+		for (int k=20; k<=deletePlan.length; k+=20) {
+		System.out.println("Delete plan length: " + k);
+		{
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		for (int j=0;j<ITERATION_COUNT;++j){
+		stats0[j] = PerformanceTest.stringDeleteTest(aChristmasCarol, deletePlan);
+		stats1[j] = PerformanceTest.stringBufferDeleteTest(aChristmasCarol, deletePlan);
+		stats2[j] = PerformanceTest.ropeDeleteTest(aChristmasCarol, deletePlan);
+		}
+		stat(System.out, stats0, "ns", "[String]");
+		stat(System.out, stats1, "ns", "[StringBuffer]");
+		stat(System.out, stats2, "ns", "[Rope]");
+		}
+		}
+
+		System.out.println();
+		System.out.println("**** PREPEND PLAN TEST ****");
+		System.out.println();
+
+		final int[][] prependPlan=new int[PLAN_LENGTH][2];
+		for (int j=0;j<prependPlan.length;++j) {
+			prependPlan[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);
+			prependPlan[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenCC - prependPlan[j][0]);
+		}
+
+		for (int k=20; k<=prependPlan.length; k+=20) {
+		System.out.println("Prepend plan length: " + k);
+		{
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		for (int j=0;j<ITERATION_COUNT;++j){
+		stats0[j] = PerformanceTest.stringPrependTest(aChristmasCarol, prependPlan, k);
+		stats1[j] = PerformanceTest.stringBufferPrependTest(aChristmasCarol, prependPlan, k);
+		stats2[j] = PerformanceTest.ropePrependTest(aChristmasCarol, prependPlan, k);
+		}
+		stat(System.out, stats0, "ns", "[String]");
+		stat(System.out, stats1, "ns", "[StringBuffer]");
+		stat(System.out, stats2, "ns", "[Rope]");
+		}
+		}
+
+		System.out.println();
+		System.out.println("**** APPEND PLAN TEST ****");
+		System.out.println();
+
+		final int[][] appendPlan=new int[PLAN_LENGTH][2];
+		for (int j=0;j<appendPlan.length;++j) {
+			appendPlan[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);
+			appendPlan[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenCC - appendPlan[j][0]);
+		}
+
+
+		for (int k=20; k<=appendPlan.length; k+=20) {
+		System.out.println("Append plan length: " + k);
+		{
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		for (int j=0;j<ITERATION_COUNT;++j){
+		stats0[j] = PerformanceTest.stringAppendTest(aChristmasCarol, appendPlan, k);
+		stats1[j] = PerformanceTest.stringBufferAppendTest(aChristmasCarol, appendPlan, k);
+		stats2[j] = PerformanceTest.ropeAppendTest(aChristmasCarol, appendPlan, k);
+		}
+		stat(System.out, stats0, "ns", "[String]");
+		stat(System.out, stats1, "ns", "[StringBuffer]");
+		stat(System.out, stats2, "ns", "[Rope]");
+		}
+		}
 
 
 		System.out.println();
 		System.out.println("**** INSERT PLAN TEST ****");
 		System.out.println("* Insert fragments of A Christmas Carol back into itself.\n");
 
-		final int[][] insertPlan=new int[500][3];
+		final int[][] insertPlan=new int[PLAN_LENGTH][3];
 		for (int j=0;j<insertPlan.length;++j) {
 			insertPlan[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);                      //location to insert
 			insertPlan[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);                      //clip from
@@ -161,14 +168,14 @@ public class PerformanceTest {
 
 
 
-		for (int k=20; k<insertPlan.length; k+=20) {
+		for (int k=0; k<=insertPlan.length; k+=20) {
 		System.out.println("Insert plan length: " + k);
 		{
 		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
-		stats0[j] = PerformanceTest.stringInsertTest(aChristmasCarol, insertPlan, k);
-		stats1[j] = PerformanceTest.stringBufferInsertTest(aChristmasCarol, insertPlan, k);
-		stats2[j] = PerformanceTest.ropeInsertTest(aChristmasCarol, insertPlan, k);
+		stats0[j] = PerformanceTest.stringInsertTest(aChristmasCarol_RAW, insertPlan, k);
+		stats1[j] = PerformanceTest.stringBufferInsertTest(aChristmasCarol_RAW, insertPlan, k);
+		stats2[j] = PerformanceTest.ropeInsertTest(aChristmasCarol_RAW, insertPlan, k);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
@@ -181,7 +188,7 @@ public class PerformanceTest {
 		System.out.println("* Insert fragments of Benjamin Franklin's Autobiography into\n" +
 				           "* A Christmas Carol.\n");
 
-		final int[][] insertPlan2=new int[250][3];
+		final int[][] insertPlan2=new int[PLAN_LENGTH][3];
 		for (int j=0;j<insertPlan2.length;++j) {
 			insertPlan2[j][0] = PerformanceTest.random.nextInt(PerformanceTest.lenCC);                      //location to insert
 			insertPlan2[j][1] = PerformanceTest.random.nextInt(PerformanceTest.lenBF);                      //clip from
@@ -212,10 +219,10 @@ public class PerformanceTest {
 		{
 		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
-		stats0[j] = PerformanceTest.stringTraverseTest(aChristmasCarol);
-		stats1[j] = PerformanceTest.stringBufferTraverseTest(aChristmasCarol);
-		stats2[j] = PerformanceTest.ropeTraverseTest_1(aChristmasCarol);
-		stats3[j] = PerformanceTest.ropeTraverseTest_2(aChristmasCarol);
+		stats0[j] = PerformanceTest.stringTraverseTest(aChristmasCarol_RAW);
+		stats1[j] = PerformanceTest.stringBufferTraverseTest(aChristmasCarol_RAW);
+		stats2[j] = PerformanceTest.ropeTraverseTest_1(aChristmasCarol_RAW);
+		stats3[j] = PerformanceTest.ropeTraverseTest_2(aChristmasCarol_RAW);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
@@ -255,10 +262,10 @@ public class PerformanceTest {
 		{
 		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
-		stats0[j] = PerformanceTest.stringRegexpTest(aChristmasCarol, p1);
-		stats1[j] = PerformanceTest.stringBufferRegexpTest(aChristmasCarol, p1);
-		stats2[j] = PerformanceTest.ropeRegexpTest(aChristmasCarol, p1);
-		stats3[j] = PerformanceTest.ropeMatcherRegexpTest(aChristmasCarol, p1);
+		stats0[j] = PerformanceTest.stringRegexpTest(aChristmasCarol_RAW, p1);
+		stats1[j] = PerformanceTest.stringBufferRegexpTest(aChristmasCarol_RAW, p1);
+		stats2[j] = PerformanceTest.ropeRegexpTest(aChristmasCarol_RAW, p1);
+		stats3[j] = PerformanceTest.ropeMatcherRegexpTest(aChristmasCarol_RAW, p1);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
@@ -274,10 +281,10 @@ public class PerformanceTest {
 		{
 		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
-		stats0[j] = PerformanceTest.stringRegexpTest(aChristmasCarol, p1);
-		stats1[j] = PerformanceTest.stringBufferRegexpTest(aChristmasCarol, p1);
-		stats2[j] = PerformanceTest.ropeRegexpTest(aChristmasCarol, p1);
-		stats3[j] = PerformanceTest.ropeMatcherRegexpTest(aChristmasCarol, p1);
+		stats0[j] = PerformanceTest.stringRegexpTest(aChristmasCarol_RAW, p1);
+		stats1[j] = PerformanceTest.stringBufferRegexpTest(aChristmasCarol_RAW, p1);
+		stats2[j] = PerformanceTest.ropeRegexpTest(aChristmasCarol_RAW, p1);
+		stats3[j] = PerformanceTest.ropeMatcherRegexpTest(aChristmasCarol_RAW, p1);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
@@ -307,6 +314,43 @@ public class PerformanceTest {
 		}
 
 		System.out.println();
+		System.out.println("**** STRING SEARCH TEST ****");
+		System.out.println("* Using a simply constructed rope and the pattern 'Bob was very\n" +
+						   "* cheerful with them, and spoke pleasantly to'.");
+
+		String toFind = "consumes faster than Labor wears; while the used key is always bright,";
+		{
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		for (int j=0;j<ITERATION_COUNT;++j){
+		stats0[j] = PerformanceTest.stringFindTest(bensAuto_RAW, toFind);
+		stats1[j] = PerformanceTest.stringBufferFindTest(bensAuto_RAW, toFind);
+		stats2[j] = PerformanceTest.ropeFindTest(bensAuto_RAW, toFind);
+		}
+		stat(System.out, stats0, "ns", "[String]");
+		stat(System.out, stats1, "ns", "[StringBuffer]");
+		stat(System.out, stats2, "ns", "[Rope]");
+		}
+
+		System.out.println();
+		System.out.println("**** STRING SEARCH TEST (COMPLEXLY-CONSTRUCTED DATASTRUCTURES)****");
+		System.out.println("* Using a complexly constructed rope and the pattern 'consumes faster\n" +
+						   "* than Labor wears; while the used key is always bright,'.");
+
+		toFind = "Bob was very cheerful with them, and spoke pleasantly to";
+		{
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		for (int j=0;j<ITERATION_COUNT;++j){
+		stats0[j] = PerformanceTest.stringFindTest2(complexString, toFind);
+		stats1[j] = PerformanceTest.stringBufferFindTest2(complexStringBuffer, toFind);
+		stats2[j] = PerformanceTest.ropeFindTest2(complexRope, toFind);
+		}
+		stat(System.out, stats0, "ns", "[String]");
+		stat(System.out, stats1, "ns", "[StringBuffer]");
+		stat(System.out, stats2, "ns", "[Rope]");
+		}
+
+
+		System.out.println();
 		System.out.println("**** WRITE TEST ****");
 		System.out.println("* Illustrates how to write a Rope to a stream efficiently.");
 
@@ -319,6 +363,69 @@ public class PerformanceTest {
 		stat(System.out, stats0, "ns", "[Out.write]");
 		stat(System.out, stats1, "ns", "[Rope.write]");
 		}
+	}
+
+	private static long stringFindTest(char[] aChristmasCarol, String toFind) {
+		long x,y;
+
+		String b = new String(aChristmasCarol);
+		x = System.nanoTime();
+		int loc = b.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[String.find]       indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
+	}
+
+	private static long stringBufferFindTest(char[] aChristmasCarol, String toFind) {
+		long x,y;
+
+		StringBuffer b = new StringBuffer(aChristmasCarol.length); b.append(aChristmasCarol);
+		x = System.nanoTime();
+		int loc = b.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[StringBuffer.find] indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
+	}
+
+	private static long ropeFindTest(char[] aChristmasCarol, String toFind) {
+		long x,y;
+
+		Rope b = Rope.BUILDER.build(aChristmasCarol);
+		x = System.nanoTime();
+		int loc = b.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[Rope.find]         indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
+	}
+
+	private static long stringFindTest2(String aChristmasCarol, String toFind) {
+		long x,y;
+
+		x = System.nanoTime();
+		int loc = aChristmasCarol.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[String.find]       indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
+	}
+
+	private static long stringBufferFindTest2(StringBuffer aChristmasCarol, String toFind) {
+		long x,y;
+
+		x = System.nanoTime();
+		int loc = aChristmasCarol.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[StringBuffer.find] indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
+	}
+
+	private static long ropeFindTest2(Rope aChristmasCarol, String toFind) {
+		long x,y;
+
+		x = System.nanoTime();
+		int loc = aChristmasCarol.indexOf(toFind);
+		y = System.nanoTime();
+		System.out.printf("[Rope.find]         indexOf needle length %d found at index %d in % ,18d ns.\n", toFind.length(), loc, (y-x));
+		return (y-x);
 	}
 
 	private static long ropeWriteGood(Rope complexRope) {
@@ -351,8 +458,8 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static String readBF() throws Exception {
-		final StringWriter out = new StringWriter(182029);
+	private static char[] readBF() throws Exception {
+		final CharArrayWriter out = new CharArrayWriter(467196);
 		final BufferedReader in = new BufferedReader(new FileReader("AutobiographyOfBenjaminFranklin_BenjaminFranklin.txt"));
 
 		final char[] c = new char[256];
@@ -361,11 +468,11 @@ public class PerformanceTest {
 			out.write(c, 0, x);
 		}
 		out.close();
-		return out.toString();
+		return out.toCharArray();
 	}
 
-	private static String readCC() throws Exception {
-		final StringWriter out = new StringWriter(182029);
+	private static char[] readCC() throws Exception {
+		final CharArrayWriter out = new CharArrayWriter(182029);
 		final BufferedReader in = new BufferedReader(new FileReader("AChristmasCarol_CharlesDickens.txt"));
 
 		final char[] c = new char[256];
@@ -374,7 +481,7 @@ public class PerformanceTest {
 			out.write(c, 0, x);
 		}
 		out.close();
-		return out.toString();
+		return out.toCharArray();
 	}
 
 	private static long ropeAppendTest(final String aChristmasCarol, final int[][] appendPlan, final int planLength) {
@@ -409,11 +516,11 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long ropeInsertTest(final String aChristmasCarol, final int[][] insertPlan, int planLength) {
+	private static long ropeInsertTest(final char[] aChristmasCarol, final int[][] insertPlan, int planLength) {
 		long x,y;
+		Rope result=Rope.BUILDER.build(aChristmasCarol);
 
 		x = System.nanoTime();
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
 
 		for (int j=0; j<planLength; ++j) {
 			final int into   = insertPlan[j][0];
@@ -460,7 +567,7 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long ropeTraverseTest_1(final String aChristmasCarol) {
+	private static long ropeTraverseTest_1(final char[] aChristmasCarol) {
 		long x,y,result=0;
 		final Rope r=Rope.BUILDER.build(aChristmasCarol);
 
@@ -473,7 +580,7 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long ropeTraverseTest_2(final String aChristmasCarol) {
+	private static long ropeTraverseTest_2(final char[] aChristmasCarol) {
 		long x,y,result=0;
 		final Rope r=Rope.BUILDER.build(aChristmasCarol);
 		
@@ -560,11 +667,11 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringBufferInsertTest(final String aChristmasCarol, final int[][] insertPlan, int planLength) {
+	private static long stringBufferInsertTest(final char[] aChristmasCarol, final int[][] insertPlan, int planLength) {
 		long x,y;
+		final StringBuffer result=new StringBuffer(aChristmasCarol.length); result.append(aChristmasCarol);
 
 		x = System.nanoTime();
-		final StringBuffer result=new StringBuffer(aChristmasCarol);
 
 		for (int j=0; j<planLength; ++j) {
 			final int into   = insertPlan[j][0];
@@ -611,12 +718,12 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringBufferTraverseTest(final String aChristmasCarol) {
+	private static long stringBufferTraverseTest(final char[] aChristmasCarol) {
 		long x,y,result=0;
+		final StringBuffer b=new StringBuffer(aChristmasCarol.length); b.append(aChristmasCarol);
 
 		x = System.nanoTime();
 
-		final StringBuffer b=new StringBuffer(aChristmasCarol);
 		for (int j=0; j<b.length(); ++j) result+=b.charAt(j);
 
 		y = System.nanoTime();
@@ -654,11 +761,11 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringInsertTest(final String aChristmasCarol, final int[][] insertPlan, int planLength) {
+	private static long stringInsertTest(final char[] aChristmasCarol, final int[][] insertPlan, int planLength) {
 		long x,y;
+		String result=new String(aChristmasCarol);
 
 		x = System.nanoTime();
-		String result=aChristmasCarol;
 
 		for (int j=0; j<planLength; ++j) {
 			final int into   = insertPlan[j][0];
@@ -706,12 +813,13 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringTraverseTest(final String aChristmasCarol) {
+	private static long stringTraverseTest(final char[] aChristmasCarol) {
 		long x,y,result=0;
+		String s = new String(aChristmasCarol);
 
 		x = System.nanoTime();
 
-		for (int j=0; j<aChristmasCarol.length(); ++j) result+=aChristmasCarol.charAt(j);
+		for (int j=0; j<s.length(); ++j) result+=s.charAt(j);
 
 		y = System.nanoTime();
 		System.out.printf("[String]       Executed traversal in % ,18d ns. Result checksum: %d\n", (y-x), result);
@@ -731,13 +839,14 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringRegexpTest(final String aChristmasCarol, Pattern pattern) {
+	private static long stringRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
+		String s = new String(aChristmasCarol);
 
 		x = System.nanoTime();
 
 		int result = 0;
-		Matcher m = pattern.matcher(aChristmasCarol);
+		Matcher m = pattern.matcher(s);
 		while (m.find()) ++result;
 		
 		y = System.nanoTime();
@@ -745,9 +854,9 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long stringBufferRegexpTest(final String aChristmasCarol, Pattern pattern) {
+	private static long stringBufferRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
-		StringBuffer buffer = new StringBuffer(aChristmasCarol);
+		StringBuffer buffer = new StringBuffer(aChristmasCarol.length); buffer.append(aChristmasCarol);
 
 		x = System.nanoTime();
 
@@ -760,7 +869,7 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long ropeRegexpTest(final String aChristmasCarol, Pattern pattern) {
+	private static long ropeRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
 		Rope rope = Rope.BUILDER.build(aChristmasCarol);
 
@@ -775,7 +884,7 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
-	private static long ropeMatcherRegexpTest(final String aChristmasCarol, Pattern pattern) {
+	private static long ropeMatcherRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
 		Rope rope = Rope.BUILDER.build(aChristmasCarol);
 
