@@ -34,6 +34,8 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javolution.text.Text;
+
 import org.ahmadsoft.ropes.Rope;
 import org.ahmadsoft.ropes.impl.AbstractRope;
 
@@ -56,6 +58,7 @@ public class PerformanceTest {
 	private static String complexString=null; 
 	private static StringBuffer complexStringBuffer=null; 
 	private static Rope complexRope=null;
+	private static Text complexText=null;
 
 	/**
 	 * @param args
@@ -116,15 +119,17 @@ public class PerformanceTest {
 		for (int k=20; k<=prependPlan.length; k+=20) {
 		System.out.println("Prepend plan length: " + k);
 		{
-		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
 		stats0[j] = PerformanceTest.stringPrependTest(aChristmasCarol, prependPlan, k);
 		stats1[j] = PerformanceTest.stringBufferPrependTest(aChristmasCarol, prependPlan, k);
 		stats2[j] = PerformanceTest.ropePrependTest(aChristmasCarol, prependPlan, k);
+		stats3[j] = PerformanceTest.textPrependTest(aChristmasCarol, prependPlan, k);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
 		stat(System.out, stats2, "ns", "[Rope]");
+		stat(System.out, stats3, "ns", "[Text]");
 		}
 		}
 
@@ -168,18 +173,20 @@ public class PerformanceTest {
 
 
 
-		for (int k=0; k<=insertPlan.length; k+=20) {
+		for (int k=insertPlan.length; k<=insertPlan.length; k+=20) {
 		System.out.println("Insert plan length: " + k);
 		{
-		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT];
-		for (int j=0;j<ITERATION_COUNT;++j){
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
+		for (int j=0;j<1;++j){
 		stats0[j] = PerformanceTest.stringInsertTest(aChristmasCarol_RAW, insertPlan, k);
 		stats1[j] = PerformanceTest.stringBufferInsertTest(aChristmasCarol_RAW, insertPlan, k);
 		stats2[j] = PerformanceTest.ropeInsertTest(aChristmasCarol_RAW, insertPlan, k);
+		stats3[j] = PerformanceTest.textInsertTest(aChristmasCarol_RAW, insertPlan, k);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
 		stat(System.out, stats2, "ns", "[Rope]");
+		stat(System.out, stats3, "ns", "[Text]");
 		}
 		}
 
@@ -240,17 +247,19 @@ public class PerformanceTest {
 		System.out.println();
 
 		{
-		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
-		for (int j=0;j<ITERATION_COUNT;++j){
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT], stats4 = new long[ITERATION_COUNT];
+		for (int j=0;j<3;++j){
 		stats0[j] = PerformanceTest.stringTraverseTest2(complexString);
 		stats1[j] = PerformanceTest.stringBufferTraverseTest2(complexStringBuffer);
 		stats2[j] = PerformanceTest.ropeTraverseTest2_1(complexRope);
 		stats3[j] = PerformanceTest.ropeTraverseTest2_2(complexRope);
+		stats4[j] = PerformanceTest.textTraverseTest2(complexText);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
 		stat(System.out, stats2, "ns", "[Rope/charAt]");
 		stat(System.out, stats3, "ns", "[Rope/itr]");
+		stat(System.out, stats4, "ns", "[Text/charAt]");
 		}
 
 		System.out.println();
@@ -260,17 +269,19 @@ public class PerformanceTest {
 		Pattern p1 = Pattern.compile("Cratchit");
 
 		{
-		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT];
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT], stats4 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
 		stats0[j] = PerformanceTest.stringRegexpTest(aChristmasCarol_RAW, p1);
 		stats1[j] = PerformanceTest.stringBufferRegexpTest(aChristmasCarol_RAW, p1);
 		stats2[j] = PerformanceTest.ropeRegexpTest(aChristmasCarol_RAW, p1);
 		stats3[j] = PerformanceTest.ropeMatcherRegexpTest(aChristmasCarol_RAW, p1);
+		stats4[j] = PerformanceTest.textRegexpTest(aChristmasCarol_RAW, p1);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
 		stat(System.out, stats2, "ns", "[Rope]");
 		stat(System.out, stats3, "ns", "[Rope.matcher]");
+		stat(System.out, stats4, "ns", "[Text]");
 		}
 
 		System.out.println();
@@ -298,19 +309,21 @@ public class PerformanceTest {
 
 		p1 = Pattern.compile("Cratchit");
 		{
-		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT], stats4 = new long[ITERATION_COUNT];
+		long[] stats0 = new long[ITERATION_COUNT], stats1 = new long[ITERATION_COUNT], stats2 = new long[ITERATION_COUNT], stats3 = new long[ITERATION_COUNT], stats4 = new long[ITERATION_COUNT], stats5 = new long[ITERATION_COUNT];
 		for (int j=0;j<ITERATION_COUNT;++j){
 		stats0[j] = PerformanceTest.stringRegexpTest2(complexString, p1);
 		stats1[j] = PerformanceTest.stringBufferRegexpTest2(complexStringBuffer, p1);
 		stats2[j] = PerformanceTest.ropeRegexpTest2(complexRope, p1);
 		stats3[j] = PerformanceTest.ropeRebalancedRegexpTest2(complexRope, p1);
 		stats4[j] = PerformanceTest.ropeMatcherRegexpTest2(complexRope, p1);
+		stats5[j] = PerformanceTest.textRegexpTest2(complexText, p1);
 		}
 		stat(System.out, stats0, "ns", "[String]");
 		stat(System.out, stats1, "ns", "[StringBuffer]");
 		stat(System.out, stats2, "ns", "[Rope]");
 		stat(System.out, stats3, "ns", "[Reblncd Rope]");
 		stat(System.out, stats4, "ns", "[Rope.matcher]");
+		stat(System.out, stats5, "ns", "[Text]");
 		}
 
 		System.out.println();
@@ -534,6 +547,24 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
+	private static long textInsertTest(final char[] aChristmasCarol, final int[][] insertPlan, int planLength) {
+		long x,y;
+		Text result=new Text(new String(aChristmasCarol));
+
+		x = System.nanoTime();
+
+		for (int j=0; j<planLength; ++j) {
+			final int into   = insertPlan[j][0];
+			final int offset = insertPlan[j][1];
+			final int length = insertPlan[j][2];
+			result = result.insert(into, result.subtext(offset, offset+length));
+		}
+		y = System.nanoTime();
+		System.out.printf("[Text]         Executed insert plan in % ,18d ns. Result has length: %d.\n", (y-x), result.length());
+		complexText = result;
+		return (y-x);
+	}
+
 	private static long ropeInsertTest2(final String aChristmasCarol, final String bensAuto, final int[][] insertPlan) {
 		long x,y;
 
@@ -564,6 +595,22 @@ public class PerformanceTest {
 		}
 		y = System.nanoTime();
 		System.out.printf("[Rope]         Executed prepend plan in % ,18d ns. Result has length: %d. Rope Depth: %d\n", (y-x), result.length(), ((AbstractRope)result).depth());
+		return (y-x);
+	}
+
+	private static long textPrependTest(final String aChristmasCarol, final int[][] prependPlan, int planLength) {
+		long x,y;
+
+		x = System.nanoTime();
+		Text result=new Text(aChristmasCarol);
+
+		for (int j=0; j<planLength; ++j) {
+			final int offset = prependPlan[j][0];
+			final int length = prependPlan[j][1];
+			result = result.subtext(offset, offset+length).concat(result);
+		}
+		y = System.nanoTime();
+		System.out.printf("[Text]         Executed prepend plan in % ,18d ns. Result has length: %d.\n", (y-x), result.length());
 		return (y-x);
 	}
 
@@ -603,6 +650,19 @@ public class PerformanceTest {
 		for (int j=0; j<result.length(); ++j) r+=result.charAt(j);
 		y = System.nanoTime();
 		System.out.printf("[Rope/charAt]  Executed traversal in % ,18d ns. Result checksum: %d\n", (y-x), r);
+		return (y-x);
+	}
+
+	private static long textTraverseTest2(Text aChristmasCarol) {
+		long x,y;
+
+		Text result=aChristmasCarol;
+		
+		int r=0;
+		x = System.nanoTime();
+		for (int j=0; j<result.length(); ++j) r+=result.charAt(j);
+		y = System.nanoTime();
+		System.out.printf("[Text/charAt]  Executed traversal in % ,18d ns. Result checksum: %d\n", (y-x), r);
 		return (y-x);
 	}
 
@@ -854,6 +914,21 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
+	private static long textRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
+		long x,y;
+		Text s = new Text(new String(aChristmasCarol));
+
+		x = System.nanoTime();
+
+		int result = 0;
+		Matcher m = pattern.matcher(s);
+		while (m.find()) ++result;
+		
+		y = System.nanoTime();
+		System.out.printf("[Text]         Executed regexp test in % ,18d ns. Found %d matches.\n", (y-x), result);
+		return (y-x);
+	}
+
 	private static long stringBufferRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
 		StringBuffer buffer = new StringBuffer(aChristmasCarol.length); buffer.append(aChristmasCarol);
@@ -912,6 +987,22 @@ public class PerformanceTest {
 		
 		y = System.nanoTime();
 		System.out.printf("[String]       Executed regexp test in % ,18d ns. Found %d matches.\n", (y-x), result);
+		return (y-x);
+	}
+	
+
+
+	private static long textRegexpTest2(final Text aChristmasCarol, Pattern pattern) {
+		long x,y;
+
+		x = System.nanoTime();
+
+		int result = 0;
+		Matcher m = pattern.matcher(aChristmasCarol);
+		while (m.find()) ++result;
+		
+		y = System.nanoTime();
+		System.out.printf("[Text]         Executed regexp test in % ,18d ns. Found %d matches.\n", (y-x), result);
 		return (y-x);
 	}
 

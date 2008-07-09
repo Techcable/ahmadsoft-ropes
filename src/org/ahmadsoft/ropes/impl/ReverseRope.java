@@ -36,7 +36,6 @@ import org.ahmadsoft.ropes.Rope;
 public final class ReverseRope extends AbstractRope {
 
 	private final Rope rope;
-	private final byte depth;
 
 	/**
 	 * Constructs a new rope from an underlying rope.
@@ -48,7 +47,6 @@ public final class ReverseRope extends AbstractRope {
 	 */
 	public ReverseRope(final Rope rope) {
 		this.rope = rope;
-		this.depth = (byte) (RopeUtilities.INSTANCE.depth(rope) + 1);
 	}
 
 	@Override
@@ -58,7 +56,7 @@ public final class ReverseRope extends AbstractRope {
 
 	@Override
 	public byte depth() {
-		return this.depth;
+		return RopeUtilities.INSTANCE.depth(this.rope);
 	}
 
 	@Override

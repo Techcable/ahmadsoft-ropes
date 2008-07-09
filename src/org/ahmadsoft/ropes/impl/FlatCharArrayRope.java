@@ -1,5 +1,5 @@
 /*
- *  FlatCharRope.java
+ *  FlatCharArrayRope.java
  *  Copyright (C) 2007 Amin Ahmad.
  *
  *  This file is part of Java Ropes.

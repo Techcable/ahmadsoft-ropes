@@ -38,7 +38,6 @@ public class SubstringRope extends AbstractRope {
 	private final FlatRope rope;
 	private final int offset;
 	private final int length;
-	private final byte depth;
 
 	public SubstringRope(final FlatRope rope, final int offset, final int length) {
 		if (length < 0 || offset < 0 || offset + length > rope.length())
@@ -47,17 +46,19 @@ public class SubstringRope extends AbstractRope {
 		this.rope = rope;
 		this.offset = offset;
 		this.length = length;
-		this.depth = (byte) (RopeUtilities.INSTANCE.depth(rope) + 1);
 	}
 
 	@Override
 	public char charAt(final int index) {
+		if (index >= this.length())
+			throw new IndexOutOfBoundsException("Rope index out of range: " + index);
+
 		return this.rope.charAt(this.offset + index);
 	}
 
 	@Override
 	public byte depth() {
-		return this.depth;
+		return RopeUtilities.INSTANCE.depth(getRope());
 	}
 
 	int getOffset() {

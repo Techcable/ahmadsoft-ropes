@@ -137,6 +137,36 @@ public abstract class AbstractRope implements Rope {
 		return -1;
 	}
 
+    @Override
+    public boolean startsWith(CharSequence prefix) {
+    	return startsWith(prefix, 0);
+    }
+    
+    @Override
+    public boolean startsWith(CharSequence prefix, int offset) {
+    	if (offset < 0 || offset > this.length())
+    		throw new IndexOutOfBoundsException("Rope offset out of range: " + offset);
+    	if (offset + prefix.length() > this.length())
+    		return false;
+    	
+    	int x=0;
+    	for (Iterator<Character> i=this.iterator(offset); i.hasNext() && x < prefix.length(); ) {
+    		if (i.next().charValue() != prefix.charAt(x++))
+    			return false;
+    	}
+    	return true;
+    }
+    
+    @Override
+    public boolean endsWith(CharSequence suffix) {
+    	return endsWith(suffix, 0);
+    }
+    
+    @Override
+    public boolean endsWith(CharSequence suffix, int offset) {
+    	return startsWith(suffix, length() - suffix.length() - offset);
+    }
+
 	@Override
 	public int indexOf(final char ch, final int fromIndex) {
 		if (fromIndex < 0 || fromIndex >= this.length())
@@ -216,7 +246,7 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope ltrim() {
+	public Rope trimStart() {
 		int index = -1;
 		for (final char c: this) {
 			++index;
@@ -255,7 +285,7 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope rtrim() { // todo: implement
+	public Rope trimEnd() {
 		int index = this.length() + 1;
 		for (final Iterator<Character> i=this.reverseIterator(); i.hasNext();) {
 			final char c = i.next();
@@ -283,10 +313,46 @@ public abstract class AbstractRope implements Rope {
 
 	@Override
 	public Rope trim() {
-		return this.ltrim().rtrim();
+		return this.trimStart().trimEnd();
 	}
 
 	public Object writeReplace() throws ObjectStreamException {
 		return new SerializedRope(this);
 	}
+	
+
+	@Override
+    public Rope padStart(final int toWidth) {
+		return padStart(toWidth, ' ');
+	}
+
+	@Override
+    public Rope padStart(final int toWidth, final char padChar) {
+		final int toPad = toWidth - this.length();
+		if (toPad < 1)
+			return this;
+		return RopeUtilities.INSTANCE.concatenate(
+			Rope.BUILDER.build(new RepeatedCharacterSequence(padChar, toPad)), 
+			this);
+	}
+
+	@Override
+    public Rope padEnd(final int toWidth) {
+		return padEnd(toWidth, ' ');
+	}
+
+	@Override
+    public Rope padEnd(final int toWidth, final char padChar) {
+		final int toPad = toWidth - this.length();
+		if (toPad < 1)
+			return this;
+		return RopeUtilities.INSTANCE.concatenate( 
+				this,
+				Rope.BUILDER.build(new RepeatedCharacterSequence(padChar, toPad)));
+	}
+	
+	@Override
+    public boolean isEmpty() {
+        return length() == 0;
+    }
 }

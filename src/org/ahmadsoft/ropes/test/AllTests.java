@@ -1,5 +1,5 @@
 /*
- *  FlatRope.java
+ *  AllTests.java
  *  Copyright (C) 2007 Amin Ahmad.
  *
  *  This file is part of Java Ropes.
@@ -20,20 +20,24 @@
  *  Amin Ahmad can be contacted at amin.ahmad@gmail.com or on the web at
  *  www.ahmadsoft.org.
  */
-package org.ahmadsoft.ropes.impl;
+package org.ahmadsoft.ropes.test;
 
-/**
- * A rope that is directly backed by a data source.
- * @author Amin Ahmad
- */
-interface FlatRope extends org.ahmadsoft.ropes.Rope {
-	/**
-	 * Returns a <code>String</code> representation of a range
-	 * in this rope.
-	 * @param offset the offset.
-	 * @param length the length.
-	 * @return a <code>String</code> representation of a range
-	 * in this rope.
-	 */
-	public String toString(int offset, int length);
+import junit.framework.Test;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
+
+public class AllTests {
+	
+	public static void main(String[] args) {
+		suite().run(new TestResult());
+	}
+
+	public static Test suite() {
+		TestSuite suite = new TestSuite("Test for org.ahmadsoft.ropes.test");
+		//$JUnit-BEGIN$
+		suite.addTestSuite(RopeTest.class);
+		//$JUnit-END$
+		return suite;
+	}
+
 }

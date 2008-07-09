@@ -60,7 +60,7 @@ import java.util.regex.Pattern;
  *
  * @author Amin Ahmad
  */
-public interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>, Serializable {
+/*@ pure @*/ public interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>, Serializable {
 
 	/**
 	 * A factory used for constructing ropes.
@@ -73,6 +73,7 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @param c the specified character.
 	 * @return a new rope.
 	 */
+	//@ ensures \result.length() == length() + 1;
 	Rope append(char c);
 
 	/**
@@ -81,6 +82,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @param suffix the specified suffix.
 	 * @return a new rope.
 	 */
+	//@ requires suffix != null;
+	//@ ensures \result.length() == length() + suffix.length();
 	Rope append(CharSequence suffix);
 
 	/**
@@ -91,6 +94,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @param end the end index, non-inclusive.
 	 * @return a new rope.
 	 */
+    //@ requires start <= end && start > -1 && end <= csq.length();
+	//@ ensures \result.length() == (length() + (end-start));
 	Rope append(CharSequence csq, int start, int end);
 
 	/**
@@ -107,6 +112,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      *             is negative, greater than <code>length()</code>, or
      *		   greater than <code>end</code>.
      */
+    //@ requires start <= end && start > -1 && end <= length();
+	//@ ensures \result.length() == (length() - (end-start));
     Rope delete(int start, int end);
 
 	/**
@@ -125,6 +132,7 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * sequence represented by this object, or <code>-1</code> if the character
 	 * does not occur.
 	 */
+    //@ ensures \result >= -1 && \result < length();
 	int indexOf(char ch);
 
 	/**
@@ -144,6 +152,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @return the index of the first occurrence of the character in the character
 	 * sequence represented by this object, or -1 if the character does not occur.
 	 */
+	//@ requires fromIndex > -1 && fromIndex < length();
+    //@ ensures \result >= -1 && \result < length();
 	int indexOf(char ch, int fromIndex);
 
 	/**
@@ -158,6 +168,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @return the index of the first occurrence of the specified string, or
 	 * -1 if the specified string does not occur.
 	 */
+	//@ requires sequence != null;
+    //@ ensures \result >= -1 && \result < length();
 	int indexOf(CharSequence sequence);
 
 	/**
@@ -173,6 +185,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * @return the index of the first occurrence of the specified string, or
 	 * -1 if the specified string does not occur.
 	 */
+	//@ requires sequence != null && fromIndex > -1 && fromIndex < length();
+    //@ ensures \result >= -1 && \result < length();
 	int indexOf(CharSequence sequence, int fromIndex);
 
 	/**
@@ -190,6 +204,7 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      * @return     a reference to the new Rope.
      * @throws     IndexOutOfBoundsException  if the offset is invalid.
      */
+	//@ requires dstOffset > -1 && dstOffset <= length();
     Rope insert(int dstOffset, CharSequence s);
 
 	/**
@@ -197,6 +212,7 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      * @param start the start position.
      * @return an iterator positioned to start at the specified index.
      */
+	//@ requires start > -1 && start < length();
     Iterator<Character> iterator(int start);
 
 	/**
@@ -204,7 +220,8 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 	 * the beginning of this string.
 	 * @return a rope with all leading whitespace trimmed.
 	 */
-	Rope ltrim();
+	//@ ensures \result.length() <= length();
+	Rope trimStart();
 
 	/**
      * Creates a matcher that will match this rope against the
@@ -213,10 +230,11 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      * <pre>
      * Matcher m = pattern.matcher(this);
      * </pre>
-     * The difference may be asymptotically better in many cases.
+     * The difference may be asymptotically better in some cases.
      * @param pattern the pattern to match this rope against.
      * @return a matcher.
      */
+	//@ requires pattern != null;
     Matcher matcher(Pattern pattern);
 
     /**
@@ -277,19 +295,20 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
 
     /**
 	 * Trims all whitespace as well as characters less than <code>0x20</code> from
-	 * the end of this string.
+	 * the end of this rope.
 	 * @return a rope with all trailing whitespace trimmed.
 	 */
-	Rope rtrim();
+	//@ ensures \result.length() <= length();
+	Rope trimEnd();
 
     @Override
 	Rope subSequence(int start, int end);
 
     /**
-	 * Trims all whitespace as well as characters less than <code>0x20</code> from
-	 * the beginnning and end of this string.
-	 * @return a rope with all leading and trailing whitespace trimmed.
-	 */
+     * Trims all whitespace as well as characters less than <code>0x20</code> from
+     * the beginning and end of this string.
+     * @return a rope with all leading and trailing whitespace trimmed.
+     */
 	Rope trim();
 
     /**
@@ -305,4 +324,94 @@ public interface Rope extends CharSequence, Iterable<Character>, Comparable<Char
      * @param length the range length.
      */
     public void write(Writer out, int offset, int length) throws IOException;
+    
+    /**
+     * Increase the length of this rope to the specified length by prepending 
+     * spaces to this rope. If the specified length is less than or equal to 
+     * the current length of the rope, the rope is returned unmodified.
+     * @param toLength the desired length.
+     * @return the padded rope.
+     * @see #padStart(int, char)
+     */
+    public Rope padStart(int toLength);
+    
+    /**
+     * Increase the length of this rope to the specified length by repeatedly 
+     * prepending the specified character to this rope. If the specified length 
+     * is less than or equal to the current length of the rope, the rope is 
+     * returned unmodified.
+     * @param toLength the desired length.
+     * @param padChar the character to use for padding.
+     * @return the padded rope.
+     * @see #padStart(int, char)
+     */
+    public Rope padStart(int toLength, char padChar);
+    
+    /**
+     * Increase the length of this rope to the specified length by appending
+     * spaces to this rope. If the specified length is less than or equal to 
+     * the current length of the rope, the rope is returned unmodified.
+     * @param toLength the desired length.
+     * @return the padded rope.
+     * @see #padStart(int, char)
+     */
+    public Rope padEnd(int toLength);
+    
+    /**
+     * Increase the length of this rope to the specified length by repeatedly 
+     * appending the specified character to this rope. If the specified length 
+     * is less than or equal to the current length of the rope, the rope is 
+     * returned unmodified.
+     * @param toLength the desired length.
+     * @param padChar the character to use for padding.
+     * @return the padded rope.
+     * @see #padStart(int, char)
+     */
+    public Rope padEnd(int toLength, char padChar);
+    
+    /**
+     * Returns true if and only if the length of this rope is zero.
+     * @return <code>true</code> if and only if the length of this
+     * rope is zero, and <code>false</code> otherwise.
+     */
+    public boolean isEmpty();
+    
+    /**
+     * Returns <code>true</code> if this rope starts with the specified 
+     * prefix.
+     * @param prefix the prefix to test.
+     * @return <code>true</code> if this rope starts with the 
+     * specified prefix and <code>false</code> otherwise.
+     * @see #startsWith(CharSequence, int)
+     */
+    public boolean startsWith(CharSequence prefix);
+    /**
+     * Returns <code>true</code> if this rope, beginning from a specified
+     * offset, starts with the specified prefix.
+     * @param prefix the prefix to test.
+     * @param offset the start offset.
+     * @return <code>true</code> if this rope starts with the 
+     * specified prefix and <code>false</code> otherwise.
+     */
+    public boolean startsWith(CharSequence prefix, int offset);
+    
+    /**
+     * Returns <code>true</code> if this rope ends with the specified 
+     * suffix.
+     * @param suffix the suffix to test.
+     * @return <code>true</code> if this rope starts with the 
+     * specified suffix and <code>false</code> otherwise.
+     * @see #endsWith(CharSequence, int)
+     */
+    public boolean endsWith(CharSequence suffix);
+    /**
+     * Returns <code>true</code> if this rope, terminated at a specified
+     * offset, ends with the specified suffix.
+     * @param suffix the suffix to test.
+     * @param offset the termination offset, counted from the end of the 
+     * rope. 
+     * @return <code>true</code> if this rope starts with the 
+     * specified prefix and <code>false</code> otherwise.
+     */
+    public boolean endsWith(CharSequence suffix, int offset);
 }

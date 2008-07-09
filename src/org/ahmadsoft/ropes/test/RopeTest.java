@@ -23,6 +23,7 @@
 package org.ahmadsoft.ropes.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Iterator;
@@ -37,12 +38,23 @@ import org.ahmadsoft.ropes.impl.FlatCharSequenceRope;
 import org.ahmadsoft.ropes.impl.ReverseRope;
 import org.ahmadsoft.ropes.impl.SubstringRope;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
-
 public class RopeTest extends TestCase {
 	
 	public void testTemp() {
 		// insert temporary code here.
+	}
+	
+	public void testLengthOverflow() {
+		Rope x1 = Rope.BUILDER.build("01");
+		for (int j=2;j<31;++j) 
+			x1 = x1.append(x1);
+		assertEquals(1073741824, x1.length());
+		try {
+			x1 = x1.append(x1);
+			fail("Expected overflow.");
+		} catch (IllegalArgumentException e) {
+			// this is what we expect
+		}
 	}
 	
 	public void testMatches() {
@@ -125,7 +137,7 @@ public class RopeTest extends TestCase {
 		Rope x1 = new FlatCharSequenceRope("012345");
 		Rope x2 = new FlatCharSequenceRope("67");
 		Rope x3 = new ConcatenationRope(x1, x2);
-		System.out.println(x1.reverse());
+		
 		assertEquals("543210", x1.reverse().toString());
 		assertEquals("76543210", x3.reverse().toString());
 		assertEquals(x3.reverse(), x3.reverse().reverse().reverse());
@@ -138,18 +150,18 @@ public class RopeTest extends TestCase {
 		Rope x2 = new FlatCharSequenceRope("\u0002 67	       \u0007");
 		Rope x3 = new ConcatenationRope(x1, x2);
 
-		assertEquals("012345", x1.ltrim().toString());
-		assertEquals("67	       \u0007", x2.ltrim().toString());
-		assertEquals("012345\u0002 67	       \u0007", x3.ltrim().toString());
+		assertEquals("012345", x1.trimStart().toString());
+		assertEquals("67	       \u0007", x2.trimStart().toString());
+		assertEquals("012345\u0002 67	       \u0007", x3.trimStart().toString());
 
-		assertEquals("\u0012  012345", x1.rtrim().toString());
-		assertEquals("\u0002 67", x2.rtrim().toString());
-		assertEquals("\u0012  012345\u0002 67", x3.rtrim().toString());
-		assertEquals("012345\u0002 67", x3.rtrim().reverse().rtrim().reverse().toString());
+		assertEquals("\u0012  012345", x1.trimEnd().toString());
+		assertEquals("\u0002 67", x2.trimEnd().toString());
+		assertEquals("\u0012  012345\u0002 67", x3.trimEnd().toString());
+		assertEquals("012345\u0002 67", x3.trimEnd().reverse().trimEnd().reverse().toString());
 
-		assertEquals(x3.ltrim().rtrim(), x3.rtrim().ltrim());
-		assertEquals(x3.ltrim().rtrim(), x3.ltrim().reverse().ltrim().reverse());
-		assertEquals(x3.ltrim().rtrim(), x3.trim());
+		assertEquals(x3.trimStart().trimEnd(), x3.trimEnd().trimStart());
+		assertEquals(x3.trimStart().trimEnd(), x3.trimStart().reverse().trimStart().reverse());
+		assertEquals(x3.trimStart().trimEnd(), x3.trim());
 	}
 
 	public void testCreation() {
@@ -382,12 +394,12 @@ public class RopeTest extends TestCase {
 		SubstringRope r3 = new SubstringRope(r1, 0, 1);
 		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//01234432100
 		
-		ByteOutputStream out = new ByteOutputStream();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(out);
 			oos.writeObject(r4);
 			oos.close();
-			ByteArrayInputStream in = new ByteArrayInputStream(out.getBytes());
+			ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
 			ObjectInputStream ois = new ObjectInputStream(in);
 			Rope r = (Rope) ois.readObject();
 			assertTrue(r instanceof FlatCharSequenceRope);
@@ -396,6 +408,41 @@ public class RopeTest extends TestCase {
 		}
 		
 		
+	}
+	
+	public void testPadStart() {
+		Rope r = Rope.BUILDER.build("hello");
+		assertEquals("hello", r.padStart(5).toString());
+		assertEquals("hello", r.padStart(0).toString());
+		assertEquals("hello", r.padStart(-1).toString());
+		assertEquals(" hello", r.padStart(6).toString());
+		assertEquals("  hello", r.padStart(7).toString());
+		assertEquals("~hello", r.padStart(6, '~').toString());
+		assertEquals("~~hello", r.padStart(7, '~').toString());
+		assertEquals("~~~~~~~~~~~~~~~~~~~~~~~~~hello", r.padStart(30, '~').toString());
+	}
+	
+	public void testPadEnd() {
+		Rope r = Rope.BUILDER.build("hello");
+		assertEquals("hello", r.padEnd(5).toString());
+		assertEquals("hello", r.padEnd(0).toString());
+		assertEquals("hello", r.padEnd(-1).toString());
+		assertEquals("hello ", r.padEnd(6).toString());
+		assertEquals("hello  ", r.padEnd(7).toString());
+		assertEquals("hello~", r.padEnd(6, '~').toString());
+		assertEquals("hello~~", r.padEnd(7, '~').toString());
+		assertEquals("hello~~~~~~~~~~~~~~~~~~~~~~~~~", r.padEnd(30, '~').toString());
+	}
+	
+	public void testSubstringBounds() {
+		Rope r  = Rope.BUILDER.build("01234567890123456789012345678901234567890123456789012345678901234567890123456789".toCharArray());
+		Rope r2 = r.subSequence(0, 30);
+		try{
+			r2.charAt(31);
+			fail("Expected IndexOutOfBoundsException");
+		} catch (IndexOutOfBoundsException e) {
+			// success
+		}
 	}
 	
 	public void testAppend() {
@@ -408,6 +455,14 @@ public class RopeTest extends TestCase {
 		assertEquals("aboytest", r.toString());
 	}
 	
+	public void testEmpty() {
+		Rope r1 = Rope.BUILDER.build("");
+		Rope r2 = Rope.BUILDER.build("012345");
+		
+		assertTrue(r1.isEmpty());
+		assertFalse(r2.isEmpty());
+		assertTrue(r2.subSequence(2, 2).isEmpty());
+	}
 	public void testCharAt() {
 		FlatCharSequenceRope r1 = new FlatCharSequenceRope("0123456789");
 		SubstringRope r2 = new SubstringRope(r1,0,1);
@@ -435,5 +490,23 @@ public class RopeTest extends TestCase {
 		for (int i: indices) {
 			assertEquals("Index: " + i, r.charAt(i), c.charAt(i));
 		}
+	}
+
+	public void testStartsEndsWith() {
+		final Rope r = Rope.BUILDER.build("Hello sir, how do you do?");
+		assertTrue(r.startsWith(""));
+		assertTrue(r.startsWith("H"));
+		assertTrue(r.startsWith("He"));
+		assertTrue(r.startsWith("Hello "));
+		assertTrue(r.startsWith("", 0));
+		assertTrue(r.startsWith("H", 0));
+		assertTrue(r.startsWith("He", 0));
+		assertTrue(r.startsWith("Hello ", 0));
+		assertTrue(r.startsWith("", 1));
+		assertTrue(r.startsWith("e", 1));
+		assertTrue(r.endsWith("?"));
+		assertTrue(r.endsWith("do?"));
+		assertTrue(r.endsWith("o", 1));
+		assertTrue(r.endsWith("you do", 1));
 	}
 }
