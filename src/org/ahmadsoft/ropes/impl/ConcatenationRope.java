@@ -193,14 +193,14 @@ public final class ConcatenationRope extends AbstractRope {
 
     @Override
     public void write(final Writer out, final int offset, final int length) throws IOException {
-        if (offset + length < this.left.length()) {
+        if (offset + length <= this.left.length()) {
             this.left.write(out, offset, length);
         } else if (offset >= this.left.length()) {
             this.right.write(out, offset - this.left.length(), length);
         } else {
             final int writeLeft = this.left.length() - offset;
             this.left.write(out, offset, writeLeft);
-            this.right.write(out, 0, this.right.length() - writeLeft);
+            this.right.write(out, 0, length - writeLeft);
         }
     }
     

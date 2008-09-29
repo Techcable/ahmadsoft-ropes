@@ -24,8 +24,11 @@ package org.ahmadsoft.ropes.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
@@ -40,6 +43,36 @@ import org.ahmadsoft.ropes.impl.SubstringRope;
 
 public class RopeTest extends TestCase {
 	
+	private String fromRope(Rope rope, int start, int end) {
+		try {
+			Writer out = new StringWriter(end - start);
+			rope.write(out, start, end - start);
+			return out.toString();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Bug reported by ugg.ugg@gmail.com.
+	 */
+	public void testRopeWriteBug() {
+		Rope r = Rope.BUILDER.build("");
+		r = r.append("round ");
+		r = r.append(Integer.toString(0));
+		r = r.append(" 1234567890");
+
+		assertEquals("round ", fromRope(r,0,6));
+		assertEquals("round 0", fromRope(r,0,7));
+		assertEquals("round 0 ", fromRope(r,0,8));
+		assertEquals("round 0 1", fromRope(r,0,9));
+		assertEquals("round 0 12", fromRope(r,0,10));
+		assertEquals("round 0 1234567890", fromRope(r,0,18));
+		assertEquals("round 0 1234567890", fromRope(r,0,r.length()));
+	}
+
+	   
 	public void testTemp() {
 		// insert temporary code here.
 	}
