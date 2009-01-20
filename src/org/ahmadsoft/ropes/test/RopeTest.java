@@ -53,6 +53,23 @@ public class RopeTest extends TestCase {
 			return null;
 		}
 	}
+	public void testSubstringDeleteBug() {
+		   String s = "12345678902234567890";
+
+		   Rope rope = Rope.BUILDER.build(s.toCharArray()); // bugs
+
+		   rope = rope.delete(0, 1);
+		   assertEquals("23", fromRope(rope, 0, 2));
+		   assertEquals("", fromRope(rope, 0, 0));
+		   assertEquals("902", fromRope(rope, 7, 10));
+		   
+		   
+		   rope = Rope.BUILDER.build(s); // no bugs
+		   rope = rope.delete(0, 1);
+		   assertEquals("23", fromRope(rope, 0, 2));
+		   assertEquals("", fromRope(rope, 0, 0));
+		   assertEquals("902", fromRope(rope, 7, 10));
+		}
 
 	/**
 	 * Bug reported by ugg.ugg@gmail.com.

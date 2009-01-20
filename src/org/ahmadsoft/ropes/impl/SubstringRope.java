@@ -156,6 +156,6 @@ public class SubstringRope extends AbstractRope {
 
 	@Override
 	public void write(final Writer out, final int offset, final int length) throws IOException {
-		this.rope.write(out, this.offset + offset, this.length + length);
+		this.rope.write(out, this.offset + offset, length);
 	}
 }
