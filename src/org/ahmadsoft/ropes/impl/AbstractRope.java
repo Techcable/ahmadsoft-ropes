@@ -215,7 +215,7 @@ public abstract class AbstractRope implements Rope {
 			while (true) {
 				final char c = me.charAt(x);
 				if (sequence.charAt(y) != c) {
-					j += bcs[(c & 0xFF)];
+					j += bcs[(me.charAt(j) & 0xFF)];
 					break;
 				}
 				if (y == 0)

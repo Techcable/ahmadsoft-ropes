@@ -559,4 +559,25 @@ public class RopeTest extends TestCase {
 		assertTrue(r.endsWith("o", 1));
 		assertTrue(r.endsWith("you do", 1));
 	}
+	
+	/**
+	 * Reported by Blake Watkins <blakewatkins@gmail.com> on
+	 * 21 Mar 2009.
+	 */
+	public void testIndexOfBug() {
+		{   // original test, bwatkins
+			String s1 = "CCCCCCPIFPCFFP";
+			String s2 = "IFPCFFP";
+
+			Rope r1 = Rope.BUILDER.build(s1);
+			Assert.assertEquals(s1.indexOf(s2), r1.indexOf(s2));
+		}
+		{   // extra test, aahmad
+			String s1 = "ABABAABBABABBAAABBBAAABABABABBBBAA";
+			String s2 = "ABABAB";
+
+			Rope r1 = Rope.BUILDER.build(s1);
+			Assert.assertEquals(s1.indexOf(s2), r1.indexOf(s2));
+		}
+	}
 }
