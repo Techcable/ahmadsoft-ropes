@@ -1,9 +1,10 @@
 plugins {
     `java-library`
+    `maven-publish`
 }
 
 group = "org.ahmadsoft"
-version = "1.2.6"
+version = "1.2.6-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -29,3 +30,10 @@ tasks.jar {
     }
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+}
