@@ -17,6 +17,13 @@ dependencies {
     testImplementation("org.javolution:javolution:5.3.1")
 }
 
+java {
+    toolchain {
+        // NOTE: This is required for jitpack, which defaults to Java 8
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
 tasks.compileJava {
     // NOTE: This version is considered 'obselete'
     //
