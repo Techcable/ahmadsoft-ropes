@@ -3,6 +3,7 @@ plugins {
 }
 
 group = "org.ahmadsoft"
+version = "1.2.6"
 
 repositories {
     mavenCentral()
