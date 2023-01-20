@@ -32,7 +32,7 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.TestCase;
 
 import org.ahmadsoft.ropes.Rope;
