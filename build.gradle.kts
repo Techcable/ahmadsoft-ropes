@@ -18,6 +18,8 @@ dependencies {
 }
 
 java {
+    withSourcesJar()
+    withJavadocJar()
     toolchain {
         // NOTE: This is required for jitpack, which defaults to Java 8
         languageVersion.set(JavaLanguageVersion.of(11))
