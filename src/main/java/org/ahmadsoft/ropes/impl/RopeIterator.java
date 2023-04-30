@@ -27,7 +27,8 @@ import java.util.Iterator;
 public interface RopeIterator extends Iterator<Character>{
 	/**
 	 * Returns the position of the last character returned.
-	 * @return
+     *
+	 * @return the position
 	 */
 	int getPosition();
 }

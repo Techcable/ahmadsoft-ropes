@@ -49,14 +49,16 @@ import java.util.regex.Pattern;
  * notably, deferred evaluation of long substrings and automatic
  * rebalancing.
  * </p>
- * <h4>Immutability (a Caveat)</h4>
+ * <section>
+ * <h1>Immutability (a Caveat)</h1>
  * A rope is immutable. Specifically, calling any mutator function
  * on a rope always returns a modified copy; the original rope is
  * left untouched. However, care must be taken to build ropes from
  * immutable <code>CharSequences</code> such as <code>Strings</code>,
  * or else from mutable <code>CharSequences</code> that your program
- * <emph>guarantees will not change</emph>. Failure to do so will result in
+ * <em>guarantees will not change</em>. Failure to do so will result in
  * logic errors.
+ * </section>
  *
  * @author Amin Ahmad
  */
@@ -176,9 +178,9 @@ import java.util.regex.Pattern;
 	 * Returns the index within this rope of the first occurrence of the
 	 * specified string, beginning at the specified index. The value returned
 	 * is the smallest <i>k</i> such that:
-	 * <pre>
-	 *     k >= fromIndex && this.startsWith(str, k)
-	 * </pre>
+	 * <pre>{@code
+	 *     k <= fromIndex && this.startsWith(str, k)
+	 * }</pre>
 	 * If no such <i>k</i> exists, then -1 is returned.
 	 * @param sequence the string to find.
 	 * @param fromIndex the index to start searching from.
@@ -314,6 +316,7 @@ import java.util.regex.Pattern;
     /**
      * Write this rope to a <code>Writer</code>.
      * @param out the writer object.
+     * @throws IOException if an IO error occurs
      */
     public void write(Writer out) throws IOException;
 
@@ -322,6 +325,7 @@ import java.util.regex.Pattern;
      * @param out the writer object.
      * @param offset the range offset.
      * @param length the range length.
+     * @throws IOException if an IO error occurs
      */
     public void write(Writer out, int offset, int length) throws IOException;
     
