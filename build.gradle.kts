@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.ahmadsoft"
-version = "1.2.7"
+version = "1.3.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -17,26 +17,23 @@ dependencies {
     testImplementation("org.javolution:javolution:5.3.1")
 }
 
+val javaVersion = 17
+
 java {
     withSourcesJar()
     withJavadocJar()
     toolchain {
         // NOTE: This is required for jitpack, which defaults to Java 8
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
 }
 
 tasks.compileJava {
-    // NOTE: This version is considered 'obselete'
-    //
-    // TODO: Upgrade to requiring Java 8 or higher
-    options.release.set(7)
+    options.release.set(javaVersion)
 }
 
-tasks.jar {
-    manifest {
-        attributes("Automatic-Module-Name" to "org.ahmadsoft.ropes")
-    }
+tasks.javadoc {
+    (options as CoreJavadocOptions).addBooleanOption("Xdoclint:all,-missing", true)
 }
 
 publishing {

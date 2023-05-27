@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
  * rebalancing.
  * </p>
  * <section>
- * <h1>Immutability (a Caveat)</h1>
+ * <h2>Immutability (a Caveat)</h2>
  * A rope is immutable. Specifically, calling any mutator function
  * on a rope always returns a modified copy; the original rope is
  * left untouched. However, care must be taken to build ropes from
