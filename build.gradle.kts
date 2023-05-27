@@ -11,10 +11,10 @@ repositories {
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.junit)
 
     // Used for performance tests
-    testImplementation("org.javolution:javolution:5.3.1")
+    testImplementation(libs.javolution)
 }
 
 val javaVersion = 17
@@ -28,7 +28,7 @@ java {
     }
 }
 
-tasks.compileJava {
+tasks.withType<JavaCompile> {
     options.release.set(javaVersion)
 }
 
