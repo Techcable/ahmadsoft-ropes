@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 /**
  * An {@link java.util.Iterator} specialized to character values.
- * <p/>
+ * <p>
  * Needed to avoid boxing.
  */
 public interface CharIterator extends PrimitiveIterator<Character, CharConsumer> {

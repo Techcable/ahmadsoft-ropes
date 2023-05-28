@@ -85,18 +85,18 @@ class RopeUtilities {
 				+ ". Concatenation would overflow length field.");
 		final int combineLength = 17;
 		if (left.length() + right.length() < combineLength) {
-			return new FlatCharSequenceRope(left.toString() + right.toString());
+			return Rope.of(left.toString() + right);
 		}
 		if (!(left instanceof ConcatenationRope)) {
 			if (right instanceof ConcatenationRope cRight) {
 				if (left.length() + cRight.getLeft().length() < combineLength)
-					return autoRebalance(new ConcatenationRope(new FlatCharSequenceRope(left.toString() + cRight.getLeft().toString()), cRight.getRight()));
+					return autoRebalance(new ConcatenationRope(Rope.viewOf(left.toString() + cRight.getLeft()), cRight.getRight()));
 			}
 		}
 		if (!(right instanceof ConcatenationRope)) {
 			if (left instanceof ConcatenationRope cLeft) {
 				if (right.length() + cLeft.getRight().length() < combineLength)
-					return autoRebalance(new ConcatenationRope(cLeft.getLeft(), new FlatCharSequenceRope(cLeft.getRight().toString() + right.toString())));
+					return autoRebalance(new ConcatenationRope(cLeft.getLeft(), Rope.viewOf(cLeft.getRight().toString() + right)));
 			}
 		}
 		
@@ -125,8 +125,8 @@ class RopeUtilities {
 	public static Rope rebalance(final Rope r) {
 		// get all the nodes into a list
 		
-		final ArrayList<Rope> leafNodes = new ArrayList<Rope>();
-		final ArrayDeque<Rope> toExamine = new ArrayDeque<Rope>();
+		final ArrayList<Rope> leafNodes = new ArrayList<>();
+		final ArrayDeque<Rope> toExamine = new ArrayDeque<>();
 		// begin a depth first loop.
 		toExamine.add(r);
 		while (toExamine.size() > 0) {

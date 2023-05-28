@@ -26,44 +26,46 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A rope constructed from a character array. This rope is even
- * flatter than a regular flat rope.
+ * A rope constructed from a string.
+ * <p>
+ * This is specialized from {@link FlatCharSequenceRope} for performance.
+ *
  * @author Amin Ahmad
  */
-public final class FlatCharArrayRope extends FlatRope {
+public final class FlatStringRope extends FlatRope {
 
-	private final char[] sequence;
+	private final String string;
 
 	/**
 	 * Constructs a new rope from a character array.
-	 * @param sequence the character array.
+	 * @param text the string
 	 */
-	public FlatCharArrayRope(final char[] sequence) {
-		this(sequence, 0, sequence.length);
+	public FlatStringRope(final String text) {
+		this.string = Objects.requireNonNull(text);
+
 	}
 
 	/**
 	 * Constructs a new rope from a character array range.
-	 * @param sequence the character array.
+	 * @param text the string
 	 * @param offset the offset in the array.
 	 * @param length the length of the array.
 	 */
-	public FlatCharArrayRope(final char[] sequence, final int offset, final int length) {
-		if (length > sequence.length)
-			throw new IllegalArgumentException("Length must be less than " + sequence.length);
-		this.sequence = new char[length];
-		System.arraycopy(sequence, offset, this.sequence, 0, length);
+	public FlatStringRope(final String text, final int offset, final int length) {
+		Objects.checkFromIndexSize(offset, length, text.length());
+		this.string = text.substring(offset, offset + length);
 	}
 
 	@Override
 	public char charAt(final int index) {
-		return this.sequence[index];
+		return this.string.charAt(index);
 	}
 
 	@Override
@@ -78,10 +80,7 @@ public final class FlatCharArrayRope extends FlatRope {
 	 */
 	@Override
 	public int indexOf(final char ch) {
-		for (int j=0; j<this.sequence.length; ++j)
-			if (this.sequence[j] == ch)
-				return j;
-		return -1;
+		return this.string.indexOf(ch);
 	}
 
 	/*
@@ -93,10 +92,16 @@ public final class FlatCharArrayRope extends FlatRope {
 	public int indexOf(final char ch, final int fromIndex) {
 		if (fromIndex < 0 || fromIndex >= this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + fromIndex);
-		for (int j=fromIndex; j<this.sequence.length; ++j)
-			if (this.sequence[j] == ch)
-				return j;
-		return -1;
+		return this.string.indexOf(ch, fromIndex);
+	}
+
+	@Override
+	public int indexOf(CharSequence needle, int fromIndex) {
+		if (needle instanceof String needleStr) {
+			return this.string.indexOf(needleStr, fromIndex);
+		} else {
+			return indexOfFallback(needle, fromIndex);
+		}
 	}
 
 	/*
@@ -104,9 +109,9 @@ public final class FlatCharArrayRope extends FlatRope {
 	 * indexOf implementation. Calls to charAt have been replaced
 	 * with direct array access to improve speed.
 	 */
+	// TODO: Is duplication worth it anymore with string special-cased?
 	@SuppressWarnings("DuplicatedCode")
-	@Override
-	public int indexOf(final CharSequence sequence, final int fromIndex) {
+	private int indexOfFallback(final CharSequence sequence, final int fromIndex) {
 		// Implementation of Boyer-Moore-Horspool algorithm with
 		// special support for unicode.
 
@@ -131,8 +136,8 @@ public final class FlatCharArrayRope extends FlatRope {
 		for (int j=fromIndex+length-1; j<this.length();) {
 			int x=j, y=length-1;
 			while (true) {
-				if (sequence.charAt(y) != this.sequence[x]) {
-					j += bcs[(this.sequence[x] & 0xFF)];
+				if (sequence.charAt(y) != this.charAt(x)) {
+					j += bcs[(this.charAt(x) & 0xFF)];
 					break;
 				}
 				if (y == 0)
@@ -153,13 +158,13 @@ public final class FlatCharArrayRope extends FlatRope {
 			int current = start;
 			@Override
 			public boolean hasNext() {
-				return this.current < FlatCharArrayRope.this.length();
+				return this.current < FlatStringRope.this.length();
 			}
 
 			@Override
 			public char nextChar() {
 				if (!hasNext()) throw new NoSuchElementException();
-				return FlatCharArrayRope.this.sequence[this.current++];
+				return FlatStringRope.this.charAt(this.current++);
 			}
 
 			@Override
@@ -171,7 +176,7 @@ public final class FlatCharArrayRope extends FlatRope {
 
 	@Override
 	public int length() {
-		return this.sequence.length;
+		return this.string.length();
 	}
 
 	@Override
@@ -184,7 +189,7 @@ public final class FlatCharArrayRope extends FlatRope {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
 		return new CharIterator() {
-			int current = FlatCharArrayRope.this.length() - start;
+			int current = FlatStringRope.this.length() - start;
 			@Override
 			public boolean hasNext() {
 				return this.current > 0;
@@ -193,7 +198,7 @@ public final class FlatCharArrayRope extends FlatRope {
 			@Override
 			public char nextChar() {
 				if (!hasNext()) throw new NoSuchElementException();
-				return FlatCharArrayRope.this.sequence[--this.current];
+				return FlatStringRope.this.charAt(--this.current);
 			}
 
 			@Override
@@ -205,10 +210,11 @@ public final class FlatCharArrayRope extends FlatRope {
 
 	@Override
 	public @NotNull Rope subSequence(final int start, final int end) {
+		Objects.checkFromToIndex(start, end, this.length());
 		if (start == 0 && end == this.length())
 			return this;
 		if (end - start < 16) {
-			return new FlatCharArrayRope(this.sequence, start, end-start);
+			return new FlatStringRope(this.string, start, end-start);
 		} else {
 			return new SubstringRope(this, start, end-start);
 		}
@@ -217,12 +223,13 @@ public final class FlatCharArrayRope extends FlatRope {
 	@Override
 	@NotNull
 	public String toString() {
-		return new String(this.sequence);
+		return this.string;
 	}
 
 
 	public String toString(final int offset, final int length) {
-		return new String(this.sequence, offset, length);
+		Objects.checkFromIndexSize(offset, length, this.string.length());
+		return this.string.substring(offset, offset + length);
 	}
 
 	@Override
@@ -232,6 +239,6 @@ public final class FlatCharArrayRope extends FlatRope {
 
 	@Override
 	public void write(final Writer out, final int offset, final int length) throws IOException {
-		out.write(this.sequence, offset, length);
+		out.write(this.string, offset, length);
 	}
 }

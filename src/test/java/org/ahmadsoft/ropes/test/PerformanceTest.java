@@ -397,7 +397,7 @@ public class PerformanceTest {
 	private static long ropeFindTest(char[] aChristmasCarol, String toFind) {
 		long x,y;
 
-		Rope b = Rope.BUILDER.build(aChristmasCarol);
+		Rope b = Rope.of(new String(aChristmasCarol));
 		x = System.nanoTime();
 		int loc = b.indexOf(toFind);
 		y = System.nanoTime();
@@ -505,7 +505,7 @@ public class PerformanceTest {
 		long x,y;
 
 		x = System.nanoTime();
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
+		Rope result=Rope.of(aChristmasCarol);
 
 		for (int j=0; j<planLength; ++j) {
 			final int offset = appendPlan[j][0];
@@ -521,7 +521,7 @@ public class PerformanceTest {
 		long x,y;
 
 		x = System.nanoTime();
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
+		Rope result=Rope.of(aChristmasCarol);
 
 		for (int j=0; j<prependPlan.length; ++j) {
 			final int offset = prependPlan[j][0];
@@ -535,7 +535,7 @@ public class PerformanceTest {
 
 	private static long ropeInsertTest(final char[] aChristmasCarol, final int[][] insertPlan, int planLength) {
 		long x,y;
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
+		Rope result=Rope.of(new String(aChristmasCarol));
 
 		x = System.nanoTime();
 
@@ -573,7 +573,7 @@ public class PerformanceTest {
 		long x,y;
 
 		x = System.nanoTime();
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
+		Rope result=Rope.of(aChristmasCarol);
 
 		for (int j=0; j<insertPlan.length; ++j) {
 			final int into   = insertPlan[j][0];
@@ -590,7 +590,7 @@ public class PerformanceTest {
 		long x,y;
 
 		x = System.nanoTime();
-		Rope result=Rope.BUILDER.build(aChristmasCarol);
+		Rope result=Rope.of(aChristmasCarol);
 
 		for (int j=0; j<planLength; ++j) {
 			final int offset = prependPlan[j][0];
@@ -620,7 +620,7 @@ public class PerformanceTest {
 
 	private static long ropeTraverseTest_1(final char[] aChristmasCarol) {
 		long x,y,result=0;
-		final Rope r=Rope.BUILDER.build(aChristmasCarol);
+		final Rope r=Rope.of(new String(aChristmasCarol));
 
 		x = System.nanoTime();
 
@@ -633,7 +633,7 @@ public class PerformanceTest {
 
 	private static long ropeTraverseTest_2(final char[] aChristmasCarol) {
 		long x,y,result=0;
-		final Rope r=Rope.BUILDER.build(aChristmasCarol);
+		final Rope r=Rope.of(new String(aChristmasCarol));
 		
 		x = System.nanoTime();
 
@@ -952,7 +952,7 @@ public class PerformanceTest {
 
 	private static long ropeRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
-		Rope rope = Rope.BUILDER.build(aChristmasCarol);
+		Rope rope = Rope.of(new String(aChristmasCarol));
 
 		x = System.nanoTime();
 
@@ -967,7 +967,7 @@ public class PerformanceTest {
 
 	private static long ropeMatcherRegexpTest(final char[] aChristmasCarol, Pattern pattern) {
 		long x,y;
-		Rope rope = Rope.BUILDER.build(aChristmasCarol);
+		Rope rope = Rope.of(new String(aChristmasCarol));
 
 		x = System.nanoTime();
 

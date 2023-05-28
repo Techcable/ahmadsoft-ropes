@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,7 +48,10 @@ public final class FlatCharSequenceRope extends FlatRope {
      *
 	 * @param sequence the underlying sequence
 	 */
+	@Deprecated // Don't call directly
+	@ApiStatus.Internal
 	public FlatCharSequenceRope(final CharSequence sequence) {
+		if (sequence instanceof String) throw new IllegalArgumentException("Should use FlatStringRope");
 		this.sequence = Objects.requireNonNull(sequence);
 	}
 
@@ -129,7 +133,7 @@ public final class FlatCharSequenceRope extends FlatRope {
 		if (start == 0 && end == this.length())
 			return this;
 		if (end - start < 8 || this.sequence instanceof String /* special optimization for String */) {
-			return new FlatCharSequenceRope(this.sequence.subSequence(start, end));
+			return Rope.copyOf(this.sequence.subSequence(start, end));
 		} else {
 			return new SubstringRope(this, start, end-start);
 		}

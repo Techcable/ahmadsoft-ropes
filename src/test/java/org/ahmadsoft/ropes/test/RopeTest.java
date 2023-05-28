@@ -33,14 +33,11 @@ import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.CharIterator;
+import org.ahmadsoft.ropes.impl.*;
 import org.junit.Assert;
 import junit.framework.TestCase;
 
 import org.ahmadsoft.ropes.Rope;
-import org.ahmadsoft.ropes.impl.ConcatenationRope;
-import org.ahmadsoft.ropes.impl.FlatCharSequenceRope;
-import org.ahmadsoft.ropes.impl.ReverseRope;
-import org.ahmadsoft.ropes.impl.SubstringRope;
 
 public class RopeTest extends TestCase {
 	
@@ -57,15 +54,32 @@ public class RopeTest extends TestCase {
 	public void testSubstringDeleteBug() {
 		   String s = "12345678902234567890";
 
-		   Rope rope = Rope.BUILDER.build(s.toCharArray()); // bugs
+		   Rope rope = Rope.of(s); // bugs
 
 		   rope = rope.delete(0, 1);
 		   assertEquals("23", fromRope(rope, 0, 2));
 		   assertEquals("", fromRope(rope, 0, 0));
 		   assertEquals("902", fromRope(rope, 7, 10));
-		   
-		   
-		   rope = Rope.BUILDER.build(s); // no bugs
+
+
+		   // no bugs
+		   rope = Rope.viewOf(new CharSequence() {
+
+			   @Override
+			   public int length() {
+				   return s.length();
+			   }
+
+			   @Override
+			   public char charAt(int index) {
+				   return s.charAt(index);
+			   }
+
+			   @Override
+			   public CharSequence subSequence(int start, int end) {
+				   return s.subSequence(start, end);
+			   }
+		   });
 		   rope = rope.delete(0, 1);
 		   assertEquals("23", fromRope(rope, 0, 2));
 		   assertEquals("", fromRope(rope, 0, 0));
@@ -76,7 +90,7 @@ public class RopeTest extends TestCase {
 	 * Bug reported by ugg.ugg@gmail.com.
 	 */
 	public void testRopeWriteBug() {
-		Rope r = Rope.BUILDER.build("");
+		Rope r = Rope.EMPTY;
 		r = r.append("round ");
 		r = r.append(Integer.toString(0));
 		r = r.append(" 1234567890");
@@ -96,7 +110,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testLengthOverflow() {
-		Rope x1 = Rope.BUILDER.build("01");
+		Rope x1 = Rope.of("01");
 		for (int j=2;j<31;++j) 
 			x1 = x1.append(x1);
 		assertEquals(1073741824, x1.length());
@@ -109,7 +123,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testMatches() {
-		Rope x1 = new FlatCharSequenceRope("0123456789");
+		Rope x1 = Rope.of("0123456789");
 		Rope x2 = new ConcatenationRope(x1, x1);
 
 		assertTrue(x2.matches("0.*9"));
@@ -120,12 +134,12 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testConcatenationFlatFlat() {
-		Rope r1 = Rope.BUILDER.build("alpha");
-		final Rope r2 = Rope.BUILDER.build("beta");
+		Rope r1 = Rope.of("alpha");
+		final Rope r2 = Rope.of("beta");
 		Rope r3 = r1.append(r2);
 		Assert.assertEquals("alphabeta", r3.toString());
 
-		r1 = Rope.BUILDER.build("The quick brown fox jumped over");
+		r1 = Rope.of("The quick brown fox jumped over");
 		r3 = r1.append(r1);
 		Assert.assertEquals("The quick brown fox jumped overThe quick brown fox jumped over", r3.toString());
 	}
@@ -153,9 +167,9 @@ public class RopeTest extends TestCase {
 	}
 
 	public void testIterator() {
-		Rope x1 = new FlatCharSequenceRope("0123456789");
-		Rope x2 = new FlatCharSequenceRope("0123456789");
-		Rope x3 = new FlatCharSequenceRope("0123456789");
+		Rope x1 = Rope.of("0123456789");
+		Rope x2 = Rope.of("0123456789");
+		Rope x3 = Rope.of("0123456789");
 		ConcatenationRope c1 = new ConcatenationRope(x1, x2);
 		ConcatenationRope c2 = new ConcatenationRope(c1, x3);
 		
@@ -164,9 +178,9 @@ public class RopeTest extends TestCase {
 			assertTrue("Has next (" + j + "/" + c2.length() + ")", i.hasNext());
 			i.nextChar();
 		}
-		assertTrue(!i.hasNext());
+		assertFalse(i.hasNext());
 		
-		FlatCharSequenceRope z1 = new FlatCharSequenceRope("0123456789");
+		FlatStringRope z1 = (FlatStringRope) Rope.of("0123456789");
 		Rope z2 = new SubstringRope(z1, 2, 0);
 		Rope z3 = new SubstringRope(z1, 2, 2);
 		Rope z4 = new ConcatenationRope(z3, new SubstringRope(z1, 6, 2)); // 2367
@@ -179,27 +193,27 @@ public class RopeTest extends TestCase {
 			try {
 				z3.iterator(j);
 			} catch (Exception e) {
-				fail(j + " " + e.toString());
+				fail(j + " " + e);
 			}
 		}
-		assertTrue(4 == z4.length());
+		assertEquals(4, z4.length());
 		for (int j=0; j<=z4.length(); ++j) {
 			try {
 				z4.iterator(j);
 			} catch (Exception e) {
-				fail(j + " " + e.toString());
+				fail(j + " " + e);
 			}
 		}
 		i=z4.iterator(4);
 		assertIteratorEquals("", i);
-		assertTrue(!i.hasNext());
+		assertFalse(i.hasNext());
 		i=z4.iterator(2);
 		assertIteratorEquals("67", i);
 	}
 	
 	public void testReverse() {
-		Rope x1 = new FlatCharSequenceRope("012345");
-		Rope x2 = new FlatCharSequenceRope("67");
+		Rope x1 = Rope.of("012345");
+		Rope x2 = Rope.of("67");
 		Rope x3 = new ConcatenationRope(x1, x2);
 		
 		assertEquals("543210", x1.reverse().toString());
@@ -210,8 +224,8 @@ public class RopeTest extends TestCase {
 	
 
 	public void testTrim() {
-		Rope x1 = new FlatCharSequenceRope("\u0012  012345");
-		Rope x2 = new FlatCharSequenceRope("\u0002 67	       \u0007");
+		Rope x1 = Rope.of("\u0012  012345");
+		Rope x2 = Rope.of("\u0002 67	       \u0007");
 		Rope x3 = new ConcatenationRope(x1, x2);
 
 		assertEquals("012345", x1.trimStart().toString());
@@ -230,52 +244,52 @@ public class RopeTest extends TestCase {
 
 	public void testCreation() {
 		try {
-			Rope.BUILDER.build("The quick brown fox jumped over");
+			Rope.of("The quick brown fox jumped over");
 		} catch (final Exception e) {
 			Assert.fail("Nonempty string: " + e.getMessage());
 		}
 		try {
-			Rope.BUILDER.build("");
+			Rope.of("");
 		} catch (final Exception e) {
 			Assert.fail("Empty string: " + e.getMessage());
 		}
 	}
 
 	public void testEquals() {
-		final Rope r1 = Rope.BUILDER.build("alpha");
-		final Rope r2 = Rope.BUILDER.build("beta");
-		final Rope r3 = Rope.BUILDER.build("alpha");
+		final Rope r1 = Rope.of("alpha");
+		final Rope r2 = Rope.of("beta");
+		final Rope r3 = Rope.of("alpha");
 
 		Assert.assertEquals(r1, r3);
-		Assert.assertFalse(r1.equals(r2));
+		Assert.assertNotEquals(r1, r2);
 	}
 
 	public void testHashCode() {
-		final Rope r1 = Rope.BUILDER.build("alpha");
-		final Rope r2 = Rope.BUILDER.build("beta");
-		final Rope r3 = Rope.BUILDER.build("alpha");
+		final Rope r1 = Rope.of("alpha");
+		final Rope r2 = Rope.of("beta");
+		final Rope r3 = Rope.of("alpha");
 
 		Assert.assertEquals(r1.hashCode(), r3.hashCode());
-		Assert.assertFalse(r1.hashCode() == r2.hashCode());
+		Assert.assertNotEquals(r1.hashCode(), r2.hashCode());
 	}
 	
 	public void testHashCode2() {
-		Rope r1 = new FlatCharSequenceRope(new StringBuffer("The quick brown fox."));
-		Rope r2 = new ConcatenationRope(new FlatCharSequenceRope(""), new FlatCharSequenceRope("The quick brown fox."));
+		Rope r1 = Rope.viewOf(new StringBuffer("The quick brown fox."));
+		Rope r2 = new ConcatenationRope(Rope.of(""), Rope.of("The quick brown fox."));
 
-		assertTrue(r1.equals(r2));
-		assertTrue(r1.equals(r2));
+		assertEquals(r1, r2);
+		assertEquals(r1, r2);
 	}
 
 	public void testIndexOf() {
-		final Rope r1 = Rope.BUILDER.build("alpha");
-		final Rope r2 = Rope.BUILDER.build("beta");
+		final Rope r1 = Rope.of("alpha");
+		final Rope r2 = Rope.of("beta");
 		final Rope r3 = r1.append(r2);
 		Assert.assertEquals(1, r3.indexOf('l'));
 		Assert.assertEquals(6, r3.indexOf('e'));
 		
 
-		Rope r = Rope.BUILDER.build("abcdef");
+		Rope r = Rope.of("abcdef");
 		assertEquals(-1, r.indexOf('z'));
 		assertEquals(0, r.indexOf('a'));
 		assertEquals(1, r.indexOf('b'));
@@ -290,7 +304,7 @@ public class RopeTest extends TestCase {
 		
 		assertEquals(2, r.indexOf("cd", 1));
 		
-		r = Rope.BUILDER.build("The quick brown fox jumped over the jumpy brown dog.");
+		r = Rope.of("The quick brown fox jumped over the jumpy brown dog.");
 		assertEquals(0, r.indexOf("The"));
 		assertEquals(10, r.indexOf("brown"));
 		assertEquals(10, r.indexOf("brown", 10));
@@ -298,19 +312,19 @@ public class RopeTest extends TestCase {
 		assertEquals(-1, r.indexOf("brown",43));
 		assertEquals(-1, r.indexOf("hhe"));
 		
-		r = Rope.BUILDER.build("zbbzzz");
+		r = Rope.of("zbbzzz");
 		assertEquals(-1, r.indexOf("ab",1));
 	}
 
 	public void testInsert() {
-		final Rope r1 = Rope.BUILDER.build("alpha");
+		final Rope r1 = Rope.of("alpha");
 		Assert.assertEquals("betaalpha", r1.insert(0, "beta").toString());
 		Assert.assertEquals("alphabeta", r1.insert(r1.length(), "beta").toString());
 		Assert.assertEquals("abetalpha", r1.insert(1, "beta").toString());
 	}
 
 	public void testPrepend() {
-		Rope r1 = Rope.BUILDER.build("alphabeta");
+		Rope r1 = Rope.of("alphabeta");
 		for (int j=0;j<2;++j)
 			r1 = r1.subSequence(0, 5).append(r1);
 		Assert.assertEquals("alphaalphaalphabeta", r1.toString());
@@ -319,30 +333,30 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testCompareTo() {
-		final Rope r1 = Rope.BUILDER.build("alpha");
-		final Rope r2 = Rope.BUILDER.build("beta");
-		final Rope r3 = Rope.BUILDER.build("alpha");
-		final Rope r4 = Rope.BUILDER.build("alpha1");
-		final String s2 = "beta"; 
+		final Rope r1 = Rope.of("alpha");
+		final Rope r2 = Rope.of("beta");
+		final Rope r3 = Rope.of("alpha");
+		final Rope r4 = Rope.of("alpha1");
+		final String s2 = "beta";
 
-		assertTrue(r1.compareTo(r3) == 0);
+		assertEquals(0, r1.compareTo(r3));
 		assertTrue(r1.compareTo(r2) < 0);
 		assertTrue(r2.compareTo(r1) > 0);
 		assertTrue(r1.compareTo(r4) < 0);
 		assertTrue(r4.compareTo(r1) > 0);
 		assertTrue(r1.compareTo(s2) < 0);
-		assertTrue(r2.compareTo(s2) == 0);
+		assertEquals(0, r2.compareTo(s2));
 	}
 	
 	public void testToString() {
 		String phrase = "The quick brown fox jumped over the lazy brown dog. Boy am I glad the dog was asleep.";
-		final Rope r1 = Rope.BUILDER.build(phrase);
-		assertTrue(phrase.equals(r1.toString()));
-		assertTrue(phrase.subSequence(7, 27).equals(r1.subSequence(7, 27).toString()));
+		final Rope r1 = Rope.of(phrase);
+		assertEquals(phrase, r1.toString());
+		assertEquals(phrase.subSequence(7, 27), r1.subSequence(7, 27).toString());
 	}
 
 	public void testReverseIterator() {
-		FlatCharSequenceRope r1 = new FlatCharSequenceRope("01234");
+		FlatStringRope r1 = (FlatStringRope) Rope.of("01234");
 		ReverseRope r2 = new ReverseRope(r1);
 		SubstringRope r3 = new SubstringRope(r1, 0, 3);
 		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//0123443210012
@@ -379,7 +393,7 @@ public class RopeTest extends TestCase {
 	}
 
 	public void testSerialize() {
-		FlatCharSequenceRope r1 = new FlatCharSequenceRope("01234");
+		FlatStringRope r1 = (FlatStringRope) Rope.of("01234");
 		ReverseRope r2 = new ReverseRope(r1);
 		SubstringRope r3 = new SubstringRope(r1, 0, 1);
 		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//01234432100
@@ -392,7 +406,7 @@ public class RopeTest extends TestCase {
 			ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
 			ObjectInputStream ois = new ObjectInputStream(in);
 			Rope r = (Rope) ois.readObject();
-			assertTrue(r instanceof FlatCharSequenceRope);
+			assertTrue(r instanceof FlatStringRope);
 		} catch (Exception e) {
 			fail(e.toString());
 		}
@@ -401,7 +415,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testPadStart() {
-		Rope r = Rope.BUILDER.build("hello");
+		Rope r = Rope.of("hello");
 		assertEquals("hello", r.padStart(5).toString());
 		assertEquals("hello", r.padStart(0).toString());
 		assertEquals("hello", r.padStart(-1).toString());
@@ -413,7 +427,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testPadEnd() {
-		Rope r = Rope.BUILDER.build("hello");
+		Rope r = Rope.of("hello");
 		assertEquals("hello", r.padEnd(5).toString());
 		assertEquals("hello", r.padEnd(0).toString());
 		assertEquals("hello", r.padEnd(-1).toString());
@@ -425,7 +439,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testSubstringBounds() {
-		Rope r  = Rope.BUILDER.build("01234567890123456789012345678901234567890123456789012345678901234567890123456789".toCharArray());
+		Rope r  = Rope.of("01234567890123456789012345678901234567890123456789012345678901234567890123456789");
 		Rope r2 = r.subSequence(0, 30);
 		try{
 			r2.charAt(31);
@@ -436,7 +450,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testAppend() {
-		Rope r = Rope.BUILDER.build("");
+		Rope r = Rope.EMPTY;
 		r=r.append('a');
 		assertEquals("a", r.toString());
 		r=r.append("boy");
@@ -446,15 +460,29 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testEmpty() {
-		Rope r1 = Rope.BUILDER.build("");
-		Rope r2 = Rope.BUILDER.build("012345");
+		Rope r1 = Rope.EMPTY;
+		Rope r2 = Rope.of("012345");
 		
 		assertTrue(r1.isEmpty());
 		assertFalse(r2.isEmpty());
 		assertTrue(r2.subSequence(2, 2).isEmpty());
 	}
+
+	public void testEmptyReused() {
+		assertSame(
+				"Empty rope objects should be reused",
+				Rope.EMPTY,
+				Rope.of("")
+		);
+		// likewise for CharSequence
+		assertSame(
+				Rope.EMPTY,
+				Rope.viewOf(new StringBuilder())
+		);
+	}
+
 	public void testCharAt() {
-		FlatCharSequenceRope r1 = new FlatCharSequenceRope("0123456789");
+		FlatStringRope r1 = (FlatStringRope) Rope.of("0123456789");
 		SubstringRope r2 = new SubstringRope(r1,0,1);
 		SubstringRope r3 = new SubstringRope(r1,9,1);
 		ConcatenationRope r4 = new ConcatenationRope(r1, r3);
@@ -469,7 +497,7 @@ public class RopeTest extends TestCase {
 	}
 	
 	public void testRegexp() {
-		ConcatenationRope r = new ConcatenationRope(new FlatCharSequenceRope("012345"), new FlatCharSequenceRope("6789"));
+		ConcatenationRope r = new ConcatenationRope(Rope.of("012345"), Rope.of("6789"));
 		CharSequence c = r.getForSequentialAccess();
 		for (int j=0; j<10; ++j) {
 			assertEquals(r.charAt(j), c.charAt(j));
@@ -483,7 +511,7 @@ public class RopeTest extends TestCase {
 	}
 
 	public void testStartsEndsWith() {
-		final Rope r = Rope.BUILDER.build("Hello sir, how do you do?");
+		final Rope r = Rope.of("Hello sir, how do you do?");
 		assertTrue(r.startsWith(""));
 		assertTrue(r.startsWith("H"));
 		assertTrue(r.startsWith("He"));
@@ -509,14 +537,14 @@ public class RopeTest extends TestCase {
 			String s1 = "CCCCCCPIFPCFFP";
 			String s2 = "IFPCFFP";
 
-			Rope r1 = Rope.BUILDER.build(s1);
+			Rope r1 = Rope.of(s1);
 			Assert.assertEquals(s1.indexOf(s2), r1.indexOf(s2));
 		}
 		{   // extra test, aahmad
 			String s1 = "ABABAABBABABBAAABBBAAABABABABBBBAA";
 			String s2 = "ABABAB";
 
-			Rope r1 = Rope.BUILDER.build(s1);
+			Rope r1 = Rope.of(s1);
 			Assert.assertEquals(s1.indexOf(s2), r1.indexOf(s2));
 		}
 	}

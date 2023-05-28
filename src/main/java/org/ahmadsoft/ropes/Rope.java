@@ -23,13 +23,14 @@
 package org.ahmadsoft.ropes;
 
 import org.ahmadsoft.ropes.impl.AbstractRope;
-import org.ahmadsoft.ropes.impl.FlatCharArrayRope;
+import org.ahmadsoft.ropes.impl.FlatStringRope;
 import org.ahmadsoft.ropes.impl.FlatCharSequenceRope;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,22 +71,10 @@ import java.util.regex.Pattern;
 /*@ pure @*/ public sealed interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>,
 		Serializable permits AbstractRope {
 
-
-	/**
-	 * Construct a rope copying from the specified character array.
-	 *
-	 * @param rope the character array to copy from
-	 * @return a rope representing the underlying character array.
-	 */
-	@NotNull
-	static Rope copyOf(char[] rope) {
-		return new FlatCharArrayRope(rope.clone());
-	}
-
 	/**
 	 * An empty rope.
 	 */
-	Rope EMPTY = new FlatCharArrayRope(new char[0]);
+	Rope EMPTY = new FlatStringRope("");
 
 	/**
 	 * Construct a rope equivalent to the specified string
@@ -98,23 +87,49 @@ import java.util.regex.Pattern;
 	 */
 	@NotNull
 	static Rope of(String text) {
-		return viewOf(text);
+		Objects.requireNonNull(text);
+		return text.isEmpty() ? EMPTY : new FlatStringRope(text);
+	}
+
+	/**
+	 * Construct a rope from the specified character sequence.
+	 * <p>
+	 * Does not need to copy for strings or ropes.<br/>
+	 * Prefer this to {@link #viewOf(CharSequence)} for safety reasons.
+	 * </p>
+	 *
+	 * @param seq the sequence to create a copy of
+	 * @return a copy of the specified sequence
+	 * @see #viewOf(CharSequence) zero-copy version
+	 */
+	static Rope copyOf(CharSequence seq) {
+		if (seq.isEmpty()) return Rope.EMPTY;
+		else if (seq instanceof Rope other) return other;
+		else return new FlatStringRope(seq.toString());
 	}
 
 	/**
 	 * Construct a rope that wraps the specified character sequence.
 	 * <p>
-	 * <b>>wARNING<b/>: This may lead to undefined results if the sequence is mutated.
+	 * <b>>wARNING</b>: This may lead to undefined results if the sequence is mutated.
+	 * Use {@link  #copyOf(CharSequence)} to avoid that.
 	 * </p>
 	 *
 	 * @param sequence the underlying character sequence.
 	 * @return a rope
+	 * @see #copyOf(CharSequence) for variant that defensively copies (preferred)
 	 */
 	@NotNull
 	static Rope viewOf(final CharSequence sequence) {
 		if (sequence.isEmpty()) return EMPTY;
 		else if (sequence instanceof Rope other) return other;
-		else return new FlatCharSequenceRope(sequence);
+		else if (sequence instanceof String str) return new FlatStringRope(str);
+		else {
+			// we are the proper users of this constructor
+			@SuppressWarnings("deprecation")
+			Rope rope = new FlatCharSequenceRope(sequence);
+			return rope;
+		}
 	}
 
 	/**

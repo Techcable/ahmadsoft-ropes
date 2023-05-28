@@ -26,7 +26,7 @@ package org.ahmadsoft.ropes.impl;
  * A rope that is directly backed by a data source.
  * @author Amin Ahmad
  */
-sealed abstract class FlatRope extends AbstractRope permits FlatCharArrayRope, FlatCharSequenceRope {
+sealed abstract class FlatRope extends AbstractRope permits FlatStringRope, FlatCharSequenceRope {
 	/**
 	 * Returns a <code>String</code> representation of a range
 	 * in this rope.

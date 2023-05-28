@@ -25,6 +25,7 @@ package org.ahmadsoft.ropes.impl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A character sequence defined by a character
@@ -55,6 +56,7 @@ public final class RepeatedCharacterSequence implements CharSequence {
 	@Override
 	@NotNull
 	public CharSequence subSequence(int start, int end) {
+		Objects.checkFromToIndex(start, end, length());
 		return new RepeatedCharacterSequence(getCharacter(), end - start);
 	}
 
@@ -63,7 +65,7 @@ public final class RepeatedCharacterSequence implements CharSequence {
 	public String toString() {
 		char[] result = new char[repeat];
 		Arrays.fill(result, character);
-		return new String(result).repeat(repeat);
+		return new String(result);
 	}
 
 	/**
