@@ -637,7 +637,8 @@ public class PerformanceTest {
 		
 		x = System.nanoTime();
 
-		for (final char c: r) result+=c;
+		var iter = r.iterator();
+		while (iter.hasNext()) result+=iter.nextChar();
 
 		y = System.nanoTime();
 		System.out.printf("[Rope/itr]     Executed traversal in % ,18d ns. Result checksum: %d\n", (y-x), result);
@@ -677,7 +678,8 @@ public class PerformanceTest {
 		
 		int r=0;
 		x = System.nanoTime();
-		for (final char c: result) r+=c;
+		var iter = result.iterator();
+		while (iter.hasNext()) r+=iter.nextChar();
 		y = System.nanoTime();
 		System.out.printf("[Rope/itr]     Executed traversal in % ,18d ns. Result checksum: %d\n", (y-x), r);
 		return (y-x);

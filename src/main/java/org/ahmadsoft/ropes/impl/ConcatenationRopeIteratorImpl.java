@@ -25,6 +25,7 @@ package org.ahmadsoft.ropes.impl;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 
 /**
@@ -35,7 +36,7 @@ import org.ahmadsoft.ropes.Rope;
  *
  * @author aahmad
  */
-public class ConcatenationRopeIteratorImpl implements Iterator<Character> {
+public class ConcatenationRopeIteratorImpl implements CharIterator {
 
 	private final ArrayDeque<Rope> toTraverse;
 	private Rope currentRope;
@@ -128,7 +129,7 @@ public class ConcatenationRopeIteratorImpl implements Iterator<Character> {
 	}
 
 	@Override
-	public Character next() {
+	public char nextChar() {
 		this.moveForward(1 + this.skip);
 		this.skip = 0;
 		return this.currentRope.charAt(this.currentRopePos);

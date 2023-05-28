@@ -25,9 +25,11 @@ package org.ahmadsoft.ropes.impl;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 
 /**
@@ -58,10 +60,10 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	}
 
 	@Override
-	public Iterator<Character> iterator(final int start) {
+	public CharIterator iterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
-		return new Iterator<Character>() {
+		return new CharIterator() {
 			int current = start;
 			@Override
 			public boolean hasNext() {
@@ -69,7 +71,8 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 			}
 
 			@Override
-			public Character next() {
+			public char nextChar() {
+				if (!hasNext()) throw new NoSuchElementException();
 				return FlatCharSequenceRope.this.sequence.charAt(this.current++);
 			}
 
@@ -97,10 +100,10 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	}
 
 	@Override
-	public Iterator<Character> reverseIterator(final int start) {
+	public CharIterator reverseIterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
-		return new Iterator<Character>() {
+		return new CharIterator() {
 			int current = FlatCharSequenceRope.this.length() - start;
 			@Override
 			public boolean hasNext() {
@@ -108,7 +111,7 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 			}
 
 			@Override
-			public Character next() {
+			public char nextChar() {
 				return FlatCharSequenceRope.this.sequence.charAt(--this.current);
 			}
 

@@ -29,9 +29,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Iterator;
+import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.junit.Assert;
 import junit.framework.TestCase;
 
@@ -128,7 +129,29 @@ public class RopeTest extends TestCase {
 		r3 = r1.append(r1);
 		Assert.assertEquals("The quick brown fox jumped overThe quick brown fox jumped over", r3.toString());
 	}
-	
+
+	public static void assertIteratorEquals(String expected, CharIterator actual) {
+		if (expected.length() == 0) {
+			assertFalse("Expected empty iterator", actual.hasNext());
+			return;
+		}
+		// TODO: Avoid this!!!
+		IntFunction<String> badSizeFormat = (actualSize) -> "Expected size " + expected.length() + ", got " + actualSize;
+		IntFunction<String> describeIndex = (index) -> "At index " + index;
+		for (int i = 0; i < expected.length(); i++) {
+			assertTrue(
+					badSizeFormat.apply(i),
+					actual.hasNext()
+			);
+			assertEquals(
+					describeIndex.apply(i),
+					expected.charAt(i),
+					actual.nextChar()
+			);
+		}
+		assertFalse("Expected " + expected.length() + " values", actual.hasNext());
+	}
+
 	public void testIterator() {
 		Rope x1 = new FlatCharSequenceRope("0123456789");
 		Rope x2 = new FlatCharSequenceRope("0123456789");
@@ -136,10 +159,10 @@ public class RopeTest extends TestCase {
 		ConcatenationRope c1 = new ConcatenationRope(x1, x2);
 		ConcatenationRope c2 = new ConcatenationRope(c1, x3);
 		
-		Iterator<Character> i = c2.iterator();
+		CharIterator i = c2.iterator();
 		for (int j = 0; j < c2.length(); ++j) {
 			assertTrue("Has next (" + j + "/" + c2.length() + ")", i.hasNext());
-			i.next();
+			i.nextChar();
 		}
 		assertTrue(!i.hasNext());
 		
@@ -149,13 +172,9 @@ public class RopeTest extends TestCase {
 		Rope z4 = new ConcatenationRope(z3, new SubstringRope(z1, 6, 2)); // 2367
 		
 		i = z2.iterator();
-		assertTrue(!i.hasNext());
+		assertIteratorEquals("", i);
 		i = z3.iterator();
-		assertTrue(i.hasNext());
-		assertEquals((char) '2',(char) i.next());
-		assertTrue(i.hasNext());
-		assertEquals((char) '3', (char) i.next());
-		assertTrue(!i.hasNext());
+		assertIteratorEquals("23", i);
 		for (int j=0; j<=z3.length(); ++j) {
 			try {
 				z3.iterator(j);
@@ -172,15 +191,10 @@ public class RopeTest extends TestCase {
 			}
 		}
 		i=z4.iterator(4);
+		assertIteratorEquals("", i);
 		assertTrue(!i.hasNext());
 		i=z4.iterator(2);
-		assertTrue(i.hasNext());
-		assertEquals((char) '6',(char) i.next());
-		assertTrue(i.hasNext());
-		assertEquals((char) '7',(char) i.next());
-		assertTrue(!i.hasNext());
-		
-		
+		assertIteratorEquals("67", i);
 	}
 	
 	public void testReverse() {
@@ -326,116 +340,42 @@ public class RopeTest extends TestCase {
 		assertTrue(phrase.equals(r1.toString()));
 		assertTrue(phrase.subSequence(7, 27).equals(r1.subSequence(7, 27).toString()));
 	}
-	
+
 	public void testReverseIterator() {
 		FlatCharSequenceRope r1 = new FlatCharSequenceRope("01234");
 		ReverseRope r2 = new ReverseRope(r1);
 		SubstringRope r3 = new SubstringRope(r1, 0, 3);
 		ConcatenationRope r4 = new ConcatenationRope(new ConcatenationRope(r1,r2),r3);	//0123443210012
-		
-		Iterator<Character> x = r1.reverseIterator();
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '3',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+
+		CharIterator x = r1.reverseIterator();
+		assertIteratorEquals("43210", x);
+
 		x = r1.reverseIterator(4);
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("0", x);
+
 		x = r2.reverseIterator();
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '3',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("01234", x);
+
 		x = r2.reverseIterator(4);
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("4", x);
+
 		x = r3.reverseIterator();
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
+		assertIteratorEquals("210", x);
 
 		x = r3.reverseIterator(1);
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("10", x);
+
 		x = r4.reverseIterator(); //0123443210012
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '3',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '3',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("2100123443210", x);
+
 		x = r4.reverseIterator(7);
-		assertEquals((char) '4',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '4',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '3',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '2',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '1',(char)  x.next());
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("443210", x);
+
 		x = r4.reverseIterator(12);
-		assertTrue(x.hasNext());
-		assertEquals((char) '0',(char)  x.next());
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("0", x);
+
 		x = r4.reverseIterator(13);
-		assertFalse(x.hasNext());
-		
+		assertIteratorEquals("", x);
 	}
 
 	public void testSerialize() {

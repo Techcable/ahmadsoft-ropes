@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -210,12 +211,40 @@ import java.util.regex.Pattern;
     Rope insert(int dstOffset, CharSequence s);
 
 	/**
+	 * Return an iterator over this sequence
+	 *
+	 * @return an iterator
+	 */
+	default CharIterator iterator() {
+		return this.iterator(0);
+	}
+
+	@Override
+	@Deprecated
+	default void forEach(Consumer<? super Character> action) {
+		if (action instanceof CharConsumer specialized) {
+			this.forEach(specialized);
+		} else {
+			this.forEach((CharConsumer) action::accept);
+		}
+	}
+
+	/**
+	 * Apply the specified action for each value in the sequence.
+     *
+	 * @param action the action to apply
+	 */
+	default void forEach(CharConsumer action) {
+		this.iterator().forEachRemaining(action);
+	}
+
+	/**
      * Returns an iterator positioned to start at the specified index.
      * @param start the start position.
      * @return an iterator positioned to start at the specified index.
      */
 	//@ requires start > -1 && start < length();
-    Iterator<Character> iterator(int start);
+    CharIterator iterator(int start);
 
 	/**
 	 * Trims all whitespace as well as characters less than 0x20 from
@@ -282,7 +311,9 @@ import java.util.regex.Pattern;
      * @return A reverse iterator positioned at the end of this rope.
      * @see Rope#reverseIterator(int)
      */
-    Iterator<Character> reverseIterator();
+    default CharIterator reverseIterator() {
+		return this.reverseIterator(0);
+	}
 
     /**
      * Returns a reverse iterator positioned to start at the specified index.
@@ -293,7 +324,7 @@ import java.util.regex.Pattern;
      * should start 1 character before the end of the rope.
      * @see Rope#reverseIterator()
      */
-    Iterator<Character> reverseIterator(int start);
+    CharIterator reverseIterator(int start);
 
     /**
 	 * Trims all whitespace as well as characters less than <code>0x20</code> from

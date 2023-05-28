@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 
 /**
@@ -86,7 +87,7 @@ public final class ConcatenationRope extends AbstractRope {
                 if (index > this.iterator.getPos()) {
                     this.iterator.skip(index-this.iterator.getPos()-1);
                     try {
-                        final char c = this.iterator.next();
+                        final char c = this.iterator.nextChar();
                         return c;
                     } catch (final IllegalArgumentException e) {
                         System.out.println("Rope length is: " + rope.length() + " charAt is " + index);
@@ -96,7 +97,7 @@ public final class ConcatenationRope extends AbstractRope {
                     final int toMoveBack = this.iterator.getPos() - index + 1;
                     if (this.iterator.canMoveBackwards(toMoveBack)) {
                         this.iterator.moveBackwards(toMoveBack);
-                        return this.iterator.next();
+                        return this.iterator.nextChar();
                     } else {
                         return rope.charAt(index);
                     }
@@ -133,7 +134,7 @@ public final class ConcatenationRope extends AbstractRope {
     }
 
     @Override
-    public Iterator<Character> iterator(final int start) {
+    public CharIterator iterator(final int start) {
         if (start < 0 || start > this.length())
             throw new IndexOutOfBoundsException("Rope index out of range: " + start);
         if (start >= this.left.length()) {
@@ -159,7 +160,7 @@ public final class ConcatenationRope extends AbstractRope {
     }
 
     @Override
-    public Iterator<Character> reverseIterator(final int start) {
+    public CharIterator reverseIterator(final int start) {
         if (start < 0 || start > this.length())
             throw new IndexOutOfBoundsException("Rope index out of range: " + start);
         if (start >= this.right.length()) {

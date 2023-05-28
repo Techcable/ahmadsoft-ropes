@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 
 /**
@@ -58,9 +59,9 @@ public abstract class AbstractRope implements Rope {
 	@Override
 	public int compareTo(final CharSequence sequence) {
 		final int compareTill = Math.min(sequence.length(), this.length());
-		final Iterator<Character> i = this.iterator();
+		final CharIterator i = this.iterator();
 		for (int j=0; j<compareTill; ++j) {
-			final char x = i.next();
+			final char x = i.nextChar();
 			final char y = sequence.charAt(j);
 			if (x != y)
 				return x - y;
@@ -87,12 +88,12 @@ public abstract class AbstractRope implements Rope {
 			final Rope rope = (Rope) other;
 			if (rope.hashCode() != this.hashCode() || rope.length() != this.length())
 				return false;
-			final Iterator<Character> i1 = this.iterator();
-			final Iterator<Character> i2 = rope.iterator();
+			final CharIterator i1 = this.iterator();
+			final CharIterator i2 = rope.iterator();
 
 			while (i1.hasNext()) {
-				final char a = i1.next();
-				final char b = i2.next();
+				final char a = i1.nextChar();
+				final char b = i2.nextChar();
 				if (a != b)
 					return false;
 			}
@@ -114,12 +115,13 @@ public abstract class AbstractRope implements Rope {
 	public int hashCode() {
 		if (this.hashCode == 0 && this.length() > 0) {
 			if (this.length() < 6) {
-				for (final char c: this)
-					this.hashCode = 31 * this.hashCode + c;
+				var iter = this.iterator();
+				while (iter.hasNext())
+					this.hashCode = 31 * this.hashCode + iter.nextChar();
 			} else {
-				final Iterator<Character> i = this.iterator();
+				final CharIterator i = this.iterator();
 				for (int j=0;j<5; ++j)
-					this.hashCode = 31 * this.hashCode + i.next();
+					this.hashCode = 31 * this.hashCode + i.nextChar();
 				this.hashCode = 31 * this.hashCode + this.charAt(this.length() - 1);
 			}
 		}
@@ -129,9 +131,10 @@ public abstract class AbstractRope implements Rope {
 	@Override
 	public int indexOf(final char ch) {
 		int index = -1;
-		for (final char c: this) {
+		var iter = this.iterator();
+		while (iter.hasNext()) {
 			++index;
-			if (c == ch)
+			if (iter.nextChar() == ch)
 				return index;
 		}
 		return -1;
@@ -150,8 +153,8 @@ public abstract class AbstractRope implements Rope {
     		return false;
     	
     	int x=0;
-    	for (Iterator<Character> i=this.iterator(offset); i.hasNext() && x < prefix.length(); ) {
-    		if (i.next().charValue() != prefix.charAt(x++))
+    	for (CharIterator i=this.iterator(offset); i.hasNext() && x < prefix.length(); ) {
+    		if (i.nextChar() != prefix.charAt(x++))
     			return false;
     	}
     	return true;
@@ -172,9 +175,9 @@ public abstract class AbstractRope implements Rope {
 		if (fromIndex < 0 || fromIndex >= this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + fromIndex);
 		int index = fromIndex - 1;
-		for (final Iterator<Character> i=this.iterator(fromIndex); i.hasNext(); ) {
+		for (final CharIterator i=this.iterator(fromIndex); i.hasNext(); ) {
 			++index;
-			if (i.next().charValue() == ch)
+			if (i.nextChar() == ch)
 				return index;
 		}
 		return -1;
@@ -241,14 +244,11 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Iterator<Character> iterator() {
-		return this.iterator(0);
-	}
-
-	@Override
 	public Rope trimStart() {
 		int index = -1;
-		for (final char c: this) {
+		var iter = this.iterator();
+		while (iter.hasNext()) {
+			final char c = iter.nextChar();
 			++index;
 			if (c > 0x20 && !Character.isWhitespace(c))
 				break;
@@ -280,15 +280,10 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Iterator<Character> reverseIterator() {
-		return this.reverseIterator(0);
-	}
-
-	@Override
 	public Rope trimEnd() {
 		int index = this.length() + 1;
-		for (final Iterator<Character> i=this.reverseIterator(); i.hasNext();) {
-			final char c = i.next();
+		for (final CharIterator i=this.reverseIterator(); i.hasNext();) {
+			final char c = i.nextChar();
 			--index;
 			if (c > 0x20 && !Character.isWhitespace(c))
 				break;

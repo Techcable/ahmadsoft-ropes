@@ -22,9 +22,9 @@
  */
 package org.ahmadsoft.ropes.impl;
 
-import java.util.Iterator;
+import org.ahmadsoft.ropes.CharIterator;
 
-public interface RopeIterator extends Iterator<Character>{
+public interface RopeIterator extends CharIterator {
 	/**
 	 * Returns the position of the last character returned.
      *

@@ -25,7 +25,9 @@ package org.ahmadsoft.ropes.impl;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
 
 /**
@@ -74,12 +76,12 @@ public class SubstringRope extends AbstractRope {
 	}
 
 	@Override
-	public Iterator<Character> iterator(final int start) {
+	public CharIterator iterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
-		return new Iterator<Character>() {
+		return new CharIterator() {
 
-			final Iterator<Character> u = SubstringRope.this.getRope().iterator(SubstringRope.this.getOffset() + start);
+			final CharIterator u = SubstringRope.this.getRope().iterator(SubstringRope.this.getOffset() + start);
 			int position = start;
 
 			@Override
@@ -88,9 +90,10 @@ public class SubstringRope extends AbstractRope {
 			}
 
 			@Override
-			public Character next() {
-				++this.position;
-				return this.u.next();
+			public char nextChar() {
+				if (!hasNext()) throw new NoSuchElementException();
+				this.position += 1;
+				return u.nextChar();
 			}
 
 			@Override
@@ -112,11 +115,11 @@ public class SubstringRope extends AbstractRope {
 	}
 
 	@Override
-	public Iterator<Character> reverseIterator(final int start) {
+	public CharIterator reverseIterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
-		return new Iterator<Character>() {
-			final Iterator<Character> u = SubstringRope.this.getRope().reverseIterator(SubstringRope.this.getRope().length() - SubstringRope.this.getOffset() - SubstringRope.this.length() + start);
+		return new CharIterator() {
+			final CharIterator u = SubstringRope.this.getRope().reverseIterator(SubstringRope.this.getRope().length() - SubstringRope.this.getOffset() - SubstringRope.this.length() + start);
 			int position = SubstringRope.this.length() - start;
 
 			@Override
@@ -125,9 +128,10 @@ public class SubstringRope extends AbstractRope {
 			}
 
 			@Override
-			public Character next() {
-				--this.position;
-				return this.u.next();
+			public char nextChar() {
+				if (!hasNext()) throw new NoSuchElementException();
+				this.position -= 1;
+				return this.u.nextChar();
 			}
 
 			@Override
