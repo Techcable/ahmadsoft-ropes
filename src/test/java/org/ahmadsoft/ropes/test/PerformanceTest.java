@@ -22,13 +22,7 @@
  */
 package org.ahmadsoft.ropes.test;
 
-import java.io.BufferedReader;
-import java.io.CharArrayWriter;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -471,9 +465,17 @@ public class PerformanceTest {
 		return (y-x);
 	}
 
+	private static File resolvePerformanceBook(String name) {
+		File f = new File("build/performance-books", name);
+		if (f.exists()) return f;
+		else return new File(name);
+	}
+
 	private static char[] readBF() throws Exception {
 		final CharArrayWriter out = new CharArrayWriter(467196);
-		final BufferedReader in = new BufferedReader(new FileReader("AutobiographyOfBenjaminFranklin_BenjaminFranklin.txt"));
+		final BufferedReader in = new BufferedReader(new FileReader(
+				resolvePerformanceBook("AutobiographyOfBenjaminFranklin_BenjaminFranklin.txt")
+		));
 
 		final char[] c = new char[256];
 		int x = -1;
@@ -486,7 +488,9 @@ public class PerformanceTest {
 
 	private static char[] readCC() throws Exception {
 		final CharArrayWriter out = new CharArrayWriter(182029);
-		final BufferedReader in = new BufferedReader(new FileReader("AChristmasCarol_CharlesDickens.txt"));
+		final BufferedReader in = new BufferedReader(new FileReader(resolvePerformanceBook(
+				"AChristmasCarol_CharlesDickens.txt"
+		)));
 
 		final char[] c = new char[256];
 		int x = -1;
