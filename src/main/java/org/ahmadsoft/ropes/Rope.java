@@ -22,10 +22,14 @@
  */
 package org.ahmadsoft.ropes;
 
+import org.ahmadsoft.ropes.impl.AbstractRope;
+import org.ahmadsoft.ropes.impl.FlatCharArrayRope;
+import org.ahmadsoft.ropes.impl.FlatCharSequenceRope;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,12 +67,55 @@ import java.util.regex.Pattern;
  *
  * @author Amin Ahmad
  */
-/*@ pure @*/ public interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>, Serializable {
+/*@ pure @*/ public sealed interface Rope extends CharSequence, Iterable<Character>, Comparable<CharSequence>,
+		Serializable permits AbstractRope {
+
 
 	/**
-	 * A factory used for constructing ropes.
+	 * Construct a rope copying from the specified character array.
+	 *
+	 * @param rope the character array to copy from
+	 * @return a rope representing the underlying character array.
 	 */
-	RopeBuilder BUILDER = new RopeBuilder();
+	@NotNull
+	static Rope copyOf(char[] rope) {
+		return new FlatCharArrayRope(rope.clone());
+	}
+
+	/**
+	 * An empty rope.
+	 */
+	Rope EMPTY = new FlatCharArrayRope(new char[0]);
+
+	/**
+	 * Construct a rope equivalent to the specified string
+	 * <p>
+	 * This should not require any copies (at least initially).
+	 * </p>
+	 *
+	 * @param text the string
+	 * @return a corresponding rope
+	 */
+	@NotNull
+	static Rope of(String text) {
+		return viewOf(text);
+	}
+
+	/**
+	 * Construct a rope that wraps the specified character sequence.
+	 * <p>
+	 * <b>>wARNING<b/>: This may lead to undefined results if the sequence is mutated.
+	 * </p>
+	 *
+	 * @param sequence the underlying character sequence.
+	 * @return a rope
+	 */
+	@NotNull
+	static Rope viewOf(final CharSequence sequence) {
+		if (sequence.isEmpty()) return EMPTY;
+		else if (sequence instanceof Rope other) return other;
+		else return new FlatCharSequenceRope(sequence);
+	}
 
 	/**
 	 * Returns a new rope created by appending the specified character to
@@ -77,6 +124,7 @@ import java.util.regex.Pattern;
 	 * @return a new rope.
 	 */
 	//@ ensures \result.length() == length() + 1;
+	@NotNull
 	Rope append(char c);
 
 	/**
@@ -87,6 +135,7 @@ import java.util.regex.Pattern;
 	 */
 	//@ requires suffix != null;
 	//@ ensures \result.length() == length() + suffix.length();
+	@NotNull
 	Rope append(CharSequence suffix);
 
 	/**
@@ -99,6 +148,7 @@ import java.util.regex.Pattern;
 	 */
     //@ requires start <= end && start > -1 && end <= csq.length();
 	//@ ensures \result.length() == (length() + (end-start));
+	@NotNull
 	Rope append(CharSequence csq, int start, int end);
 
 	/**
@@ -117,6 +167,7 @@ import java.util.regex.Pattern;
      */
     //@ requires start <= end && start > -1 && end <= length();
 	//@ ensures \result.length() == (length() - (end-start));
+	@NotNull
     Rope delete(int start, int end);
 
 	/**
@@ -208,6 +259,7 @@ import java.util.regex.Pattern;
      * @throws     IndexOutOfBoundsException  if the offset is invalid.
      */
 	//@ requires dstOffset > -1 && dstOffset <= length();
+	@NotNull
     Rope insert(int dstOffset, CharSequence s);
 
 	/**
@@ -296,12 +348,14 @@ import java.util.regex.Pattern;
      *
      * @return a rebalanced rope.
      */
+	@NotNull
     public Rope rebalance();
 
     /**
      * Reverses this rope.
      * @return a reversed copy of this rope.
      */
+	@NotNull
     public Rope reverse();
 
     /**
@@ -332,9 +386,11 @@ import java.util.regex.Pattern;
 	 * @return a rope with all trailing whitespace trimmed.
 	 */
 	//@ ensures \result.length() <= length();
+	@NotNull
 	Rope trimEnd();
 
     @Override
+	@NotNull
 	Rope subSequence(int start, int end);
 
     /**
@@ -342,6 +398,7 @@ import java.util.regex.Pattern;
      * the beginning and end of this string.
      * @return a rope with all leading and trailing whitespace trimmed.
      */
+	@NotNull
 	Rope trim();
 
     /**

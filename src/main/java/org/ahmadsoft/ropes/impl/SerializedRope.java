@@ -22,11 +22,7 @@
  */
 package org.ahmadsoft.ropes.impl;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.ObjectStreamException;
+import java.io.*;
 
 import org.ahmadsoft.ropes.Rope;
 
@@ -54,9 +50,7 @@ final class SerializedRope implements Externalizable {
 	public SerializedRope() {}
 
 	/**
-	 * Create a new concatenation rope from two ropes.
-	 * @param left the first rope.
-	 * @param right the second rope.
+	 * Create a serialized rope.
 	 */
 	public SerializedRope(final Rope rope) {
 		this.rope = rope;
@@ -67,9 +61,10 @@ final class SerializedRope implements Externalizable {
 			ClassNotFoundException {
 		// Read the UTF string and build a rope from it. This should
 		// result in a FlatRope.
-		this.rope = Rope.BUILDER.build(in.readUTF());
+		this.rope = Rope.of(in.readUTF());
 	}
 
+	@Serial
 	private Object readResolve() throws ObjectStreamException {
 		// Substitute an instance of this class with the deserialized
 		// rope.

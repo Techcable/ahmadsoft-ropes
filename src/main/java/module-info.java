@@ -7,4 +7,5 @@
  */
 module org.ahmadsoft.ropes {
     exports org.ahmadsoft.ropes;
+    requires static org.jetbrains.annotations;
 }

@@ -25,18 +25,18 @@ package org.ahmadsoft.ropes.impl;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A rope constructed from a character array. This rope is even
  * flatter than a regular flat rope.
  * @author Amin Ahmad
  */
-public final class FlatCharArrayRope extends AbstractRope implements FlatRope {
+public final class FlatCharArrayRope extends FlatRope {
 
 	private final char[] sequence;
 
@@ -104,6 +104,7 @@ public final class FlatCharArrayRope extends AbstractRope implements FlatRope {
 	 * indexOf implementation. Calls to charAt have been replaced
 	 * with direct array access to improve speed.
 	 */
+	@SuppressWarnings("DuplicatedCode")
 	@Override
 	public int indexOf(final CharSequence sequence, final int fromIndex) {
 		// Implementation of Boyer-Moore-Horspool algorithm with
@@ -174,7 +175,7 @@ public final class FlatCharArrayRope extends AbstractRope implements FlatRope {
 	}
 
 	@Override
-	public Rope reverse() {
+	public @NotNull Rope reverse() {
 		return new ReverseRope(this);
 	}
 
@@ -203,7 +204,7 @@ public final class FlatCharArrayRope extends AbstractRope implements FlatRope {
 	}
 
 	@Override
-	public Rope subSequence(final int start, final int end) {
+	public @NotNull Rope subSequence(final int start, final int end) {
 		if (start == 0 && end == this.length())
 			return this;
 		if (end - start < 16) {
@@ -214,6 +215,7 @@ public final class FlatCharArrayRope extends AbstractRope implements FlatRope {
 	}
 
 	@Override
+	@NotNull
 	public String toString() {
 		return new String(this.sequence);
 	}

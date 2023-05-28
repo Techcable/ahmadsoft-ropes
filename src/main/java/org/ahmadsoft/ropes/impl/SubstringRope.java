@@ -24,24 +24,26 @@ package org.ahmadsoft.ropes.impl;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a lazily-evaluated substring of another rope. For performance
  * reasons, the target rope must be a <code>FlatRope</code>.
  * @author aahmad
  */
-public class SubstringRope extends AbstractRope {
+public final class SubstringRope extends AbstractRope {
 
 	private final FlatRope rope;
 	private final int offset;
 	private final int length;
 
 	public SubstringRope(final FlatRope rope, final int offset, final int length) {
+		Objects.requireNonNull(rope);
 		if (length < 0 || offset < 0 || offset + length > rope.length())
 			throw new IndexOutOfBoundsException("Invalid substring offset (" + offset + ") and length (" + length + ") for underlying rope with length " + rope.length());
 
@@ -60,7 +62,7 @@ public class SubstringRope extends AbstractRope {
 
 	@Override
 	public byte depth() {
-		return RopeUtilities.INSTANCE.depth(getRope());
+		return RopeUtilities.depth(getRope());
 	}
 
 	int getOffset() {
@@ -79,9 +81,9 @@ public class SubstringRope extends AbstractRope {
 	public CharIterator iterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
+		final CharIterator u = this.getRope().iterator(this.getOffset() + start);
 		return new CharIterator() {
 
-			final CharIterator u = SubstringRope.this.getRope().iterator(SubstringRope.this.getOffset() + start);
 			int position = start;
 
 			@Override
@@ -98,7 +100,7 @@ public class SubstringRope extends AbstractRope {
 
 			@Override
 			public void remove() {
-				this.u.remove();
+				u.remove();
 			}
 
 		};
@@ -110,7 +112,7 @@ public class SubstringRope extends AbstractRope {
 	}
 
 	@Override
-	public Rope reverse() {
+	public @NotNull Rope reverse() {
 		return new ReverseRope(this);
 	}
 
@@ -118,8 +120,9 @@ public class SubstringRope extends AbstractRope {
 	public CharIterator reverseIterator(final int start) {
 		if (start < 0 || start > this.length())
 			throw new IndexOutOfBoundsException("Rope index out of range: " + start);
+		final CharIterator u = this.getRope()
+				.reverseIterator(this.getRope().length() - this.getOffset() - this.length() + start);
 		return new CharIterator() {
-			final CharIterator u = SubstringRope.this.getRope().reverseIterator(SubstringRope.this.getRope().length() - SubstringRope.this.getOffset() - SubstringRope.this.length() + start);
 			int position = SubstringRope.this.length() - start;
 
 			@Override
@@ -131,18 +134,18 @@ public class SubstringRope extends AbstractRope {
 			public char nextChar() {
 				if (!hasNext()) throw new NoSuchElementException();
 				this.position -= 1;
-				return this.u.nextChar();
+				return u.nextChar();
 			}
 
 			@Override
 			public void remove() {
-				this.u.remove();
+				u.remove();
 			}
 		};
 	}
 
 	@Override
-	public Rope subSequence(final int start, final int end) {
+	public @NotNull Rope subSequence(final int start, final int end) {
 		if (start == 0 && end == this.length())
 			return this;
 		return new SubstringRope(this.rope, this.offset + start, end-start);

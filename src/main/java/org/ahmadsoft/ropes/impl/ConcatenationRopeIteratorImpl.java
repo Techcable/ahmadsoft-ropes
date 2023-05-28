@@ -23,7 +23,6 @@
 package org.ahmadsoft.ropes.impl;
 
 import java.util.ArrayDeque;
-import java.util.Iterator;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
@@ -80,9 +79,9 @@ public class ConcatenationRopeIteratorImpl implements CharIterator {
 	private void initialize() {
 		while (!this.toTraverse.isEmpty()) {
 			this.currentRope = this.toTraverse.pop();
-			if (this.currentRope instanceof ConcatenationRope) {
-				this.toTraverse.push(((ConcatenationRope) this.currentRope).getRight());
-				this.toTraverse.push(((ConcatenationRope) this.currentRope).getLeft());
+			if (this.currentRope instanceof ConcatenationRope current) {
+				this.toTraverse.push(current.getRight());
+				this.toTraverse.push(current.getLeft());
 			} else {
 				break;
 			}
@@ -117,9 +116,9 @@ public class ConcatenationRopeIteratorImpl implements CharIterator {
 
 			while (!this.toTraverse.isEmpty()) {
 				this.currentRope = this.toTraverse.pop();
-				if (this.currentRope instanceof ConcatenationRope) {
-					this.toTraverse.push(((ConcatenationRope) this.currentRope).getRight());
-					this.toTraverse.push(((ConcatenationRope) this.currentRope).getLeft());
+				if (this.currentRope instanceof ConcatenationRope current) {
+					this.toTraverse.push(current.getRight());
+					this.toTraverse.push(current.getLeft());
 				} else {
 					this.currentRopePos = -1;
 					break;

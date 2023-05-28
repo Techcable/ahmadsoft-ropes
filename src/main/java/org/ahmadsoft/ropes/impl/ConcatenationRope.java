@@ -24,10 +24,11 @@ package org.ahmadsoft.ropes.impl;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
+import java.util.Objects;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A rope that represents the concatenation of two other ropes.
@@ -46,9 +47,9 @@ public final class ConcatenationRope extends AbstractRope {
      * @param right the second rope.
      */
     public ConcatenationRope(final Rope left, final Rope right) {
-        this.left   = left;
-        this.right  = right;
-        this.depth  = (byte) (Math.max(RopeUtilities.INSTANCE.depth(left), RopeUtilities.INSTANCE.depth(right)) + 1);
+        this.left   = Objects.requireNonNull(left);
+        this.right  = Objects.requireNonNull(right);
+        this.depth  = (byte) (Math.max(RopeUtilities.depth(left), RopeUtilities.depth(right)) + 1);
         this.length = left.length() + right.length();
     }
 
@@ -86,13 +87,7 @@ public final class ConcatenationRope extends AbstractRope {
             public char charAt(final int index) {
                 if (index > this.iterator.getPos()) {
                     this.iterator.skip(index-this.iterator.getPos()-1);
-                    try {
-                        final char c = this.iterator.nextChar();
-                        return c;
-                    } catch (final IllegalArgumentException e) {
-                        System.out.println("Rope length is: " + rope.length() + " charAt is " + index);
-                        throw e;
-                    }
+                    return this.iterator.nextChar();
                 } else { /* if (index <= lastIndex) */
                     final int toMoveBack = this.iterator.getPos() - index + 1;
                     if (this.iterator.canMoveBackwards(toMoveBack)) {
@@ -150,13 +145,13 @@ public final class ConcatenationRope extends AbstractRope {
     }
 
     @Override
-    public Rope rebalance() {
-        return RopeUtilities.INSTANCE.rebalance(this);
+    public @NotNull Rope rebalance() {
+        return RopeUtilities.rebalance(this);
     }
 
     @Override
-    public Rope reverse() {
-        return RopeUtilities.INSTANCE.concatenate(this.getRight().reverse(), this.getLeft().reverse());
+    public @NotNull Rope reverse() {
+        return RopeUtilities.concatenate(this.getRight().reverse(), this.getLeft().reverse());
     }
 
     @Override
@@ -171,7 +166,7 @@ public final class ConcatenationRope extends AbstractRope {
     }
 
     @Override
-    public Rope subSequence(final int start, final int end) {
+    public @NotNull Rope subSequence(final int start, final int end) {
         if (start < 0 || end > this.length())
             throw new IllegalArgumentException("Illegal subsequence (" + start + "," + end + ")");
         if (start == 0 && end == this.length())
@@ -181,7 +176,7 @@ public final class ConcatenationRope extends AbstractRope {
             return this.left.subSequence(start, end);
         if (start >= l)
             return this.right.subSequence(start - l, end - l);
-        return RopeUtilities.INSTANCE.concatenate(
+        return RopeUtilities.concatenate(
             this.left.subSequence(start, l),
             this.right.subSequence(0, end - l));
     }

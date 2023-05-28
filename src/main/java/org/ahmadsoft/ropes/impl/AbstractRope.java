@@ -24,36 +24,43 @@ package org.ahmadsoft.ropes.impl;
 
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Abstract base class for ropes that implements many of the common operations.
  * @author Amin Ahmad
  */
-public abstract class AbstractRope implements Rope {
+public sealed abstract class AbstractRope implements Rope
+		permits FlatRope, ConcatenationRope, SubstringRope, ReverseRope {
 
 	protected int hashCode = 0;
 
 	@Override
-	public Rope append(final char c) {
-		return RopeUtilities.INSTANCE.concatenate(this, Rope.BUILDER.build(String.valueOf(c)));
+	public @NotNull Rope append(final char c) {
+		return RopeUtilities.concatenate(this, Rope.of(String.valueOf(c)));
 	}
 
 	@Override
-	public Rope append(final CharSequence suffix) {
-		return RopeUtilities.INSTANCE.concatenate(this, Rope.BUILDER.build(suffix));
+	public @NotNull Rope append(final CharSequence suffix) {
+		return RopeUtilities.concatenate(this, Rope.viewOf(suffix));
 	}
 
 	@Override
-	public Rope append(final CharSequence csq, final int start, final int end) {
-		return RopeUtilities.INSTANCE.concatenate(this, Rope.BUILDER.build(csq).subSequence(start, end));
+	public @NotNull Rope append(final CharSequence csq, final int start, final int end) {
+		/*
+		 * TODO: Should sub sequence come after or before Rope.viewOf?
+		 * The way it is done now creates a view of the underlying sequence.
+		 * It has potential to leak memory just like old String.subString impl.
+		 */
+		return RopeUtilities.concatenate(this, Rope.viewOf(csq).subSequence(start, end));
 	}
 
 	@Override
@@ -70,7 +77,7 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope delete(final int start, final int end) {
+	public @NotNull Rope delete(final int start, final int end) {
 		if (start == end)
 			return this;
 		return this.subSequence(0, start).append(this.subSequence(end, this.length()));
@@ -84,8 +91,7 @@ public abstract class AbstractRope implements Rope {
 
 	@Override
 	public boolean equals(final Object other) {
-		if (other instanceof Rope) {
-			final Rope rope = (Rope) other;
+		if (other instanceof Rope rope) {
 			if (rope.hashCode() != this.hashCode() || rope.length() != this.length())
 				return false;
 			final CharIterator i1 = this.iterator();
@@ -119,6 +125,7 @@ public abstract class AbstractRope implements Rope {
 				while (iter.hasNext())
 					this.hashCode = 31 * this.hashCode + iter.nextChar();
 			} else {
+				// TODO: Why doesn't this consider all chars?
 				final CharIterator i = this.iterator();
 				for (int j=0;j<5; ++j)
 					this.hashCode = 31 * this.hashCode + i.nextChar();
@@ -189,6 +196,7 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
+	@SuppressWarnings("DuplicatedCode") // duplicated in FlatCharArrayRope
 	public int indexOf(final CharSequence sequence, final int fromIndex) {
 		final CharSequence me = this.getForSequentialAccess();
 
@@ -232,8 +240,8 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope insert(final int dstOffset, final CharSequence s) {
-		final Rope r = (s == null) ? Rope.BUILDER.build("null"): Rope.BUILDER.build(s);
+	public @NotNull Rope insert(final int dstOffset, final CharSequence s) {
+		final Rope r = (s == null) ? Rope.viewOf("null") : Rope.viewOf(s);
 		if (dstOffset == 0)
 			return r.append(this);
 		else if (dstOffset == this.length())
@@ -275,12 +283,12 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope rebalance() {
+	public @NotNull Rope rebalance() {
 		return this;
 	}
 
 	@Override
-	public Rope trimEnd() {
+	public @NotNull Rope trimEnd() {
 		int index = this.length() + 1;
 		for (final CharIterator i=this.reverseIterator(); i.hasNext();) {
 			final char c = i.nextChar();
@@ -307,10 +315,11 @@ public abstract class AbstractRope implements Rope {
 	}
 
 	@Override
-	public Rope trim() {
+	public @NotNull Rope trim() {
 		return this.trimStart().trimEnd();
 	}
 
+	@Serial
 	public Object writeReplace() throws ObjectStreamException {
 		return new SerializedRope(this);
 	}
@@ -326,9 +335,10 @@ public abstract class AbstractRope implements Rope {
 		final int toPad = toWidth - this.length();
 		if (toPad < 1)
 			return this;
-		return RopeUtilities.INSTANCE.concatenate(
-			Rope.BUILDER.build(new RepeatedCharacterSequence(padChar, toPad)), 
-			this);
+		return RopeUtilities.concatenate(
+			Rope.viewOf(new RepeatedCharacterSequence(padChar, toPad)),
+			this
+		);
 	}
 
 	@Override
@@ -341,9 +351,10 @@ public abstract class AbstractRope implements Rope {
 		final int toPad = toWidth - this.length();
 		if (toPad < 1)
 			return this;
-		return RopeUtilities.INSTANCE.concatenate( 
+		return RopeUtilities.concatenate(
 				this,
-				Rope.BUILDER.build(new RepeatedCharacterSequence(padChar, toPad)));
+				Rope.viewOf(new RepeatedCharacterSequence(padChar, toPad))
+		);
 	}
 	
 	@Override

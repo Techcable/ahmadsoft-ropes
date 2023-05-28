@@ -22,6 +22,8 @@
  */
 package org.ahmadsoft.ropes.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 
 /**
@@ -29,10 +31,10 @@ import java.util.Arrays;
  * and a repeat count.
  * @author Amin Ahmad
  */
-public class RepeatedCharacterSequence implements CharSequence {
+public final class RepeatedCharacterSequence implements CharSequence {
 	
-	private char character;
-	private int repeat;
+	private final char character;
+	private final int repeat;
 
 	public RepeatedCharacterSequence(char character, int repeat) {
 		super();
@@ -51,15 +53,17 @@ public class RepeatedCharacterSequence implements CharSequence {
 	}
 
 	@Override
+	@NotNull
 	public CharSequence subSequence(int start, int end) {
 		return new RepeatedCharacterSequence(getCharacter(), end - start);
 	}
-	
+
 	@Override
+	@NotNull
 	public String toString() {
 		char[] result = new char[repeat];
 		Arrays.fill(result, character);
-		return new String(result);
+		return new String(result).repeat(repeat);
 	}
 
 	/**

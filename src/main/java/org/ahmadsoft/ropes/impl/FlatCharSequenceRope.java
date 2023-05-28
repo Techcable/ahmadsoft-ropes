@@ -24,19 +24,21 @@ package org.ahmadsoft.ropes.impl;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A rope constructed from an underlying character sequence.
  * @author Amin Ahmad
  */
-public final class FlatCharSequenceRope extends AbstractRope implements FlatRope {
+public final class FlatCharSequenceRope extends FlatRope {
+	@NotNull
 
 	private final CharSequence sequence;
 
@@ -46,7 +48,7 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	 * @param sequence the underlying sequence
 	 */
 	public FlatCharSequenceRope(final CharSequence sequence) {
-		this.sequence = sequence;
+		this.sequence = Objects.requireNonNull(sequence);
 	}
 
 	@Override
@@ -95,7 +97,7 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	}
 
 	@Override
-	public Rope reverse() {
+	public @NotNull Rope reverse() {
 		return new ReverseRope(this);
 	}
 
@@ -123,7 +125,7 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	}
 
 	@Override
-	public Rope subSequence(final int start, final int end) {
+	public @NotNull Rope subSequence(final int start, final int end) {
 		if (start == 0 && end == this.length())
 			return this;
 		if (end - start < 8 || this.sequence instanceof String /* special optimization for String */) {
@@ -134,6 +136,7 @@ public final class FlatCharSequenceRope extends AbstractRope implements FlatRope
 	}
 
 	@Override
+	@NotNull
 	public String toString() {
 		return this.sequence.toString();
 	}

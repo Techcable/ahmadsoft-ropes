@@ -24,11 +24,11 @@ package org.ahmadsoft.ropes.impl;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.ahmadsoft.ropes.CharIterator;
 import org.ahmadsoft.ropes.Rope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A rope representing the reversal of character sequence.
@@ -59,7 +59,7 @@ public final class ReverseRope extends AbstractRope {
 
 	@Override
 	public byte depth() {
-		return RopeUtilities.INSTANCE.depth(this.rope);
+		return RopeUtilities.depth(this.rope);
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public final class ReverseRope extends AbstractRope {
 	}
 
 	@Override
-	public Rope reverse() {
+	public @NotNull Rope reverse() {
 		return this.rope;
 	}
 
@@ -120,7 +120,7 @@ public final class ReverseRope extends AbstractRope {
 	}
 
 	@Override
-	public Rope subSequence(final int start, final int end) {
+	public @NotNull Rope subSequence(final int start, final int end) {
 		if (start == 0 && end == this.length())
 			return this;
 		return this.rope.subSequence(this.length() - end, this.length() - start).reverse();

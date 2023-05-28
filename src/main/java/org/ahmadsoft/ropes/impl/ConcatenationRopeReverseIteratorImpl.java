@@ -36,7 +36,7 @@ import org.ahmadsoft.ropes.Rope;
  *
  * @author aahmad
  */
-public class ConcatenationRopeReverseIteratorImpl implements CharIterator {
+public final class ConcatenationRopeReverseIteratorImpl implements CharIterator {
 
 	private final ArrayDeque<Rope> toTraverse;
 	private final Rope rope;
@@ -82,9 +82,9 @@ public class ConcatenationRopeReverseIteratorImpl implements CharIterator {
 	private void initialize() {
 		while (!this.toTraverse.isEmpty()) {
 			this.currentRope = this.toTraverse.pop();
-			if (this.currentRope instanceof ConcatenationRope) {
-				this.toTraverse.push(((ConcatenationRope) this.currentRope).getLeft());
-				this.toTraverse.push(((ConcatenationRope) this.currentRope).getRight());
+			if (this.currentRope instanceof ConcatenationRope current) {
+				this.toTraverse.push(current.getLeft());
+				this.toTraverse.push(current.getRight());
 			} else {
 				break;
 			}
@@ -116,9 +116,9 @@ public class ConcatenationRopeReverseIteratorImpl implements CharIterator {
 
 			while (!this.toTraverse.isEmpty()) {
 				this.currentRope = this.toTraverse.pop();
-				if (this.currentRope instanceof ConcatenationRope) {
-					this.toTraverse.push(((ConcatenationRope) this.currentRope).getLeft());
-					this.toTraverse.push(((ConcatenationRope) this.currentRope).getRight());
+				if (this.currentRope instanceof ConcatenationRope current) {
+					this.toTraverse.push(current.getLeft());
+					this.toTraverse.push(current.getRight());
 				} else {
 					this.currentRopePos = this.currentRope.length();
 					break;

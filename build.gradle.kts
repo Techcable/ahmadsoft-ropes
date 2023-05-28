@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly(libs.jetbrains.annotations)
     testImplementation(libs.junit)
 
     // Used for performance tests
